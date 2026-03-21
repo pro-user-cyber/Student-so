@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Storage - Student OS</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="glass-panel" style="border-radius: 0 0 20px 20px; margin-bottom: 0;">
+        <div class="logo">Student OS</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="pomodoro.html">Pomodoro</a>
+            <a href="calculator.html">Calc</a>
+            <a href="assistant.html">AI</a>
+            <a href="search.html">Search</a>
+            <a href="storage.html" class="active">Storage</a>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 800px; margin-top: 2rem;">
+        <div class="glass-panel">
+            <h2>My Files (IndexedDB)</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">Files are stored securely in your browser database.</p>
+            
+            <div style="margin-bottom: 2rem;">
+                <input type="file" id="file-input" style="display: none;">
+                <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">+ Upload File</button>
+            </div>
+
+            <ul class="file-list" id="file-list">
+                <!-- Files will appear here -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const DB_NAME = 'StudentOS_DB';
+        const STORE_NAME = 'files';
+
+        // Initialize IndexedDB
+        const request = indexedDB.open(DB_NAME, 1);
+
+        request.onerror = (event) => console.error("Database error: " + event.target.errorCode);
+
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            }
+        };
+
+        request.onsuccess = (event) => {
+            const db = event.target.result;
+            renderFiles(db);
+        };
+
+        // Save File
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const db = request.result;
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                
+                const fileData = {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    data: event.target.result // This is the Base64 string
+                };
+
+                store.add(fileData);
+                renderFiles(db);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Render Files
+        function renderFiles(db) {
+            fileList.innerHTML = '';
+            const transaction = db.transaction([STORE_NAME], 'readonly');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.openCursor();
+
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (cursor) {
+                    const file = cursor.value;
+                    const li = document.createElement('li');
+                    li.className = 'file-item';
+                    li.innerHTML = `
+                        <span>📄 ${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
+                        <div>
+                            <button class="btn btn-secondary" onclick="downloadFile(${file.data})">Download</button>
+                            <button class="btn btn-secondary" style="background: #ff758c;" onclick="deleteFile(${file.id})">Delete</button>
+                        </div>
+                    `;
+                    fileList.appendChild(li);
+                    cursor.continue();
+                }
+            };
+        }
+
+        // Download File
+        function downloadFile(base64Data) {
+            const link = document.createElement('a');
