@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculator - Student OS</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="glass-panel" style="border-radius: 0 0 20px 20px; margin-bottom: 0;">
+        <div class="logo">Student OS</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="pomodoro.html">Pomodoro</a>
+            <a href="calculator.html" class="active">Calc</a>
+            <a href="assistant.html">AI</a>
+            <a href="search.html">Search</a>
+            <a href="storage.html">Storage</a>
+        </div>
+    </nav>
+
+    <div class="container" style="display: flex; justify-content: center; align-items: center; height: 80vh;">
+        <div class="glass-panel" style="width: 320px;">
+            <input type="text" id="calc-display" class="calc-display" readonly>
+            <div class="calc-grid">
+                <button class="btn btn-secondary" onclick="appendCalc('C')">C</button>
+                <button class="btn btn-secondary" onclick="appendCalc('/')">/</button>
+                <button class="btn btn-secondary" onclick="appendCalc('*')">*</button>
+                <button class="btn btn-secondary" onclick="deleteLast()">⌫</button>
+                
+                <button class="btn btn-secondary" onclick="appendCalc('7')">7</button>
+                <button class="btn btn-secondary" onclick="appendCalc('8')">8</button>
+                <button class="btn btn-secondary" onclick="appendCalc('9')">9</button>
+                <button class="btn btn-secondary" onclick="appendCalc('-')">-</button>
+                
+                <button class="btn btn-secondary" onclick="appendCalc('4')">4</button>
+                <button class="btn btn-secondary" onclick="appendCalc('5')">5</button>
+                <button class="btn btn-secondary" onclick="appendCalc('6')">6</button>
+                <button class="btn btn-secondary" onclick="appendCalc('+')">+</button>
+                
+                <button class="btn btn-secondary" onclick="appendCalc('1')">1</button>
+                <button class="btn btn-secondary" onclick="appendCalc('2')">2</button>
+                <button class="btn btn-secondary" onclick="appendCalc('3')">3</button>
+                <button class="btn btn-primary" style="grid-row: span 2;" onclick="calculate()">=</button>
+                
+                <button class="btn btn-secondary" style="grid-column: span 2;" onclick="appendCalc('0')">0</button>
+                <button class="btn btn-secondary" onclick="appendCalc('.')">.</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const display = document.getElementById('calc-display');
+
+        function appendCalc(value) {
+            if (value === 'C') {
+                display.value = '';
+            } else if (value === '⌫') {
+                display.value = display.value.slice(0, -1);
+            } else {
+                display.value += value;
+            }
+        }
+
+        function calculate() {
+            try {
+                // Warning: eval is used here for simplicity in a static demo. 
+                // In a production app, use a math parser library.
+                display.value = eval(display.value);
+            } catch (error) {
+                display.value = 'Error';
+            }
+        }
+    </script>
+</body>
+</html>
