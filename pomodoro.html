@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pomodoro - Student OS</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="glass-panel" style="border-radius: 0 0 20px 20px; margin-bottom: 0;">
+        <div class="logo">Student OS</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="pomodoro.html" class="active">Pomodoro</a>
+            <a href="calculator.html">Calc</a>
+            <a href="assistant.html">AI</a>
+            <a href="search.html">Search</a>
+            <a href="storage.html">Storage</a>
+        </div>
+    </nav>
+
+    <div class="container" style="text-align: center; margin-top: 3rem;">
+        <div class="glass-panel">
+            <h2>Focus Timer</h2>
+            <div class="timer-display" id="timer">25:00</div>
+            
+            <div style="display: flex; justify-content: center; gap: 10px;">
+                <button class="btn btn-primary" onclick="startTimer()">Start</button>
+                <button class="btn btn-secondary" onclick="pauseTimer()">Pause</button>
+                <button class="btn btn-secondary" onclick="resetTimer()">Reset</button>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <p>Completed Sessions: <span id="session-count" style="color: var(--accent-pink); font-weight: bold;">0</span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timeLeft = 25 * 60;
+        let timerId = null;
+        const display = document.getElementById('timer');
+        const countDisplay = document.getElementById('session-count');
+
+        // Load session count
+        let sessions = localStorage.getItem('pomodoro_sessions') || 0;
+        countDisplay.innerText = sessions;
+
+        function updateDisplay() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+        }
+
+        function startTimer() {
+            if (timerId) return;
+            timerId = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    updateDisplay();
+                } else {
+                    clearInterval(timerId);
+                    timerId = null;
+                    alert("Session Complete! Take a break.");
+                    // Increment session
+                    sessions = parseInt(sessions) + 1;
+                    localStorage.setItem('pomodoro_sessions', sessions);
+                    countDisplay.innerText = sessions;
+                    timeLeft = 25 * 60;
+                    updateDisplay();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            clearInterval(timerId);
+            timerId = null;
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            timeLeft = 25 * 60;
+            updateDisplay();
+        }
+    </script>
+</body>
+</html>
