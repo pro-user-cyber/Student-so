@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search - Student OS</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="glass-panel" style="border-radius: 0 0 20px 20px; margin-bottom: 0;">
+        <div class="logo">Student OS</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="pomodoro.html">Pomodoro</a>
+            <a href="calculator.html">Calc</a>
+            <a href="assistant.html">AI</a>
+            <a href="search.html" class="active">Search</a>
+            <a href="storage.html">Storage</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="search-container">
+            <div class="glass-panel">
+                <h1 style="margin-bottom: 2rem;">What do you want to learn?</h1>
+                <form action="https://duckduckgo.com/" method="get" target="_blank">
+                    <input type="text" name="q" class="search-input" placeholder="Search the web..." required>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Search</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
