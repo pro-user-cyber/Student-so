@@ -1,4 +1,6 @@
-// js/assistant.js - Notes-Based Study Assistant
+// js/assistant.js - FIXED VERSION
+
+console.log('🔧 Assistant script loaded!'); // Debug
 
 // DOM Elements
 const notesInput = document.getElementById('notes-input');
@@ -7,214 +9,264 @@ const chatMessages = document.getElementById('chat-messages');
 const notesStatus = document.getElementById('notes-status');
 const notesInfo = document.getElementById('notes-info');
 
-// Load data from localStorage on page load
-window.onload = function() {
+// Global variables
+let chatHistory = [];
+
+// === INIT ON PAGE LOAD ===
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM loaded, initializing...');
+    
+    // Load everything
     loadNotes();
     loadChatHistory();
     updateNotesInfo();
-};
+    
+    // Event listeners
+    questionInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') askQuestion();
+    });
+    
+    notesInput.addEventListener('input', updateNotesInfo);
+    
+    console.log('✅ Assistant fully initialized!');
+});
 
-// === NOTES MANAGEMENT ===
+// === NOTES FUNCTIONS ===
 function saveNotes() {
+    console.log('💾 Saving notes...');
+    
     const notes = notesInput.value.trim();
     
     if (!notes) {
-        showStatus('Please add some notes first!', 'error');
+        showStatus('⚠️ Please type some notes first!', 'error');
         return;
     }
     
-    // Save to localStorage
-    localStorage.setItem('student_os_notes', notes);
-    showStatus('✅ Notes saved! (' + (notes.length / 1000).toFixed(1) + ' KB)', 'success');
-    updateNotesInfo();
-    
-    // Auto-focus question input
-    questionInput.focus();
+    try {
+        // Save to localStorage
+        localStorage.setItem('student_os_notes', notes);
+        
+        // Calculate stats
+        const sentences = notes.split(/[.!?]+/).filter(s => s.trim()).length;
+        showStatus(`✅ Saved! ${sentences} sentences (${Math.round(notes.length/100)} words)`, 'success');
+        updateNotesInfo();
+        
+        console.log('✅ Notes saved successfully');
+        
+    } catch (error) {
+        console.error('❌ Save error:', error);
+        showStatus('❌ Save failed! Check browser storage.', 'error');
+    }
 }
 
 function clearNotes() {
-    if (confirm('Clear all notes?')) {
+    if (confirm('🗑️ Clear all notes? This cannot be undone.')) {
         notesInput.value = '';
         localStorage.removeItem('student_os_notes');
-        showStatus('🗑️ Notes cleared', 'info');
+        showStatus('🗑️ Notes cleared!', 'info');
         updateNotesInfo();
+        console.log('🗑️ Notes cleared');
     }
 }
 
 function loadNotes() {
-    const savedNotes = localStorage.getItem('student_os_notes');
-    if (savedNotes) {
-        notesInput.value = savedNotes;
+    try {
+        const savedNotes = localStorage.getItem('student_os_notes');
+        console.log('📥 Loading notes:', savedNotes ? 'Found' : 'None');
+        
+        if (savedNotes) {
+            notesInput.value = savedNotes;
+        }
+    } catch (error) {
+        console.error('❌ Load notes error:', error);
     }
 }
 
 function updateNotesInfo() {
-    const notes = localStorage.getItem('student_os_notes') || '';
-    const sentenceCount = notes.split(/[.!?]+/).filter(s => s.trim()).length;
-    
-    if (notes) {
-        notesInfo.textContent = `${sentenceCount} sentences loaded`;
-        notesInfo.style.color = 'var(--accent-blue)';
-    } else {
-        notesInfo.textContent = 'No notes loaded';
-        notesInfo.style.color = 'var(--text-secondary)';
+    try {
+        const notes = localStorage.getItem('student_os_notes') || '';
+        const words = notes.trim().split(/\s+/).length;
+        
+        if (notes) {
+            notesInfo.innerHTML = `📊 ${words} words loaded <span style="color: var(--accent-blue);">✓</span>`;
+        } else {
+            notesInfo.textContent = 'No notes loaded';
+        }
+    } catch (error) {
+        console.error('❌ Update info error:', error);
     }
 }
 
-// === QUESTION ANSWERING ===
-async function askQuestion() {
+// === AI QUESTION ANSWERING ===
+function askQuestion() {
     const question = questionInput.value.trim();
-    if (!question) return;
-
-    // Add user question to chat
-    addMessage('question', question);
-    questionInput.value = '';
-
-    // Check if notes exist
-    const notes = localStorage.getItem('student_os_notes');
-    if (!notes) {
-        addMessage('assistant', '❌ Please save some notes first, then ask questions!');
+    console.log('❓ Question:', question);
+    
+    if (!question) {
+        showStatus('⚠️ Please type a question!', 'error');
         return;
     }
 
-    // Show searching message
-    const searchMsg = addMessage('assistant', '🔍 Searching your notes...');
+    // Add question to chat
+    addMessage('question', question);
+    questionInput.value = '';
+
+    // Check notes
+    const notes = localStorage.getItem('student_os_notes');
+    if (!notes || notes.trim() === '') {
+        addMessage('assistant', '❌ <strong>No notes found!</strong><br>Save some study notes first, then ask questions.');
+        return;
+    }
+
+    // Show searching
+    const searchId = addMessage('assistant', '🔍 Searching your notes...');
     
-    // Simulate thinking delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Remove search message
-    removeMessage(searchMsg.id);
-    
-    // Find answer
-    const answer = findAnswer(question, notes);
-    addMessage('assistant', answer);
-    
-    // Save to history
-    saveChatHistory();
-    questionInput.focus();
+    // Fake delay for realism
+    setTimeout(() => {
+        removeMessage(searchId);
+        const answer = findBestAnswer(question, notes);
+        addMessage('assistant', answer);
+        saveChatHistory();
+    }, 500);
 }
 
-function findAnswer(question, notes) {
-    // Split notes into sentences
+function findBestAnswer(question, notes) {
+    console.log('🔍 Finding answer for:', question);
+    
+    // Clean and split notes into sentences
     const sentences = notes
-        .split(/[.!?]+/)
-        .map(s => s.trim().toLowerCase())
-        .filter(s => s.length > 10); // Filter short fragments
+        .split(/[\n.!?]+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 15) // Meaningful sentences only
+        .map(s => s.toLowerCase());
     
-    // Extract keywords from question
-    const questionWords = question
+    // Extract question keywords (3+ letters)
+    const keywords = question
         .toLowerCase()
-        .replace(/[^\w\s]/g, '') // Remove punctuation
+        .replace(/[^\w\s]/g, ' ')
         .split(/\s+/)
-        .filter(word => word.length > 2); // Words longer than 2 chars
+        .filter(word => word.length >= 3);
     
-    if (questionWords.length === 0) {
-        return 'Please ask a more specific question!';
+    console.log('Keywords:', keywords);
+    console.log('Sentences found:', sentences.length);
+    
+    if (keywords.length === 0) {
+        return '🤔 Try asking with specific words from your notes!';
     }
     
-    // Score sentences based on keyword matches
-    let bestMatch = null;
+    // Score each sentence
+    let bestSentence = null;
     let bestScore = 0;
     
     sentences.forEach(sentence => {
         let score = 0;
-        questionWords.forEach(word => {
-            if (sentence.includes(word)) {
-                score += 2; // Exact word match
+        
+        // Count keyword matches
+        keywords.forEach(keyword => {
+            if (sentence.includes(keyword)) {
+                score += (keyword.length / 3); // Longer matches worth more
             }
         });
         
-        // Bonus for multiple matches
-        if (questionWords.filter(word => sentence.includes(word)).length > 1) {
-            score += 1;
-        }
+        // Multiple keyword bonus
+        const matches = keywords.filter(kw => sentence.includes(kw)).length;
+        if (matches >= 2) score += 2;
         
-        if (score > bestScore && score > 2) {
+        if (score > bestScore && score >= 1.5) {
             bestScore = score;
-            bestMatch = sentence;
+            bestSentence = sentence;
         }
     });
     
-    if (bestMatch && bestScore > 2) {
-        return `📖 "${bestMatch.charAt(0).toUpperCase() + bestMatch.slice(1)}"`;
+    if (bestSentence) {
+        // Clean up answer
+        const cleanAnswer = bestSentence.charAt(0).toUpperCase() + bestSentence.slice(1);
+        return `📖 <strong>Found in your notes:</strong><br>"${cleanAnswer}"<br><small>Score: ${Math.round(bestScore*10)/10}</small>`;
     } else {
-        return `🤔 No direct match found in your notes for "${question}". 
-Try different keywords or add more detailed notes! 💡`;
+        return `🤔 No good matches found for "${question}".<br>
+        💡 <strong>Tips:</strong><br>
+        - Use keywords from your notes<br>
+        - Add more detailed notes<br>
+        - Try synonyms`;
     }
 }
 
-// === CHAT UI ===
+// === CHAT SYSTEM ===
 function addMessage(type, text) {
     const id = Date.now();
     const message = {
-        id,
-        type,
-        text,
+        id: id,
+        type: type,
+        text: text,
         time: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
     };
     
     chatHistory.push(message);
     renderChat();
-    return message;
+    return id;
 }
 
 function removeMessage(id) {
-    chatHistory = chatHistory.filter(msg => msg.id !== id);
+    chatHistory = chatHistory.filter(msg => msg.id != id);
     renderChat();
 }
 
-let chatHistory = [];
-
 function renderChat() {
-    // Keep only last 20 messages
-    chatHistory = chatHistory.slice(-20);
+    // Limit to last 15 messages
+    chatHistory = chatHistory.slice(-15);
     
-    chatMessages.innerHTML = chatHistory.map(msg => `
-        <div class="message ${msg.type}">
-            <time>${msg.time}</time>
-            ${msg.text}
-        </div>
-    `).join('');
+    chatMessages.innerHTML = chatHistory.map(msg => {
+        return `
+            <div class="message ${msg.type}">
+                <time>${msg.time}</time>
+                ${msg.text}
+            </div>
+        `;
+    }).join('');
     
+    // Auto-scroll to bottom
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 function saveChatHistory() {
-    localStorage.setItem('student_os_chat_history', JSON.stringify(chatHistory));
-}
-
-function loadChatHistory() {
-    const saved = localStorage.getItem('student_os_chat_history');
-    if (saved) {
-        chatHistory = JSON.parse(saved);
-        renderChat();
+    try {
+        localStorage.setItem('student_os_chat_history', JSON.stringify(chatHistory.slice(-20)));
+    } catch (e) {
+        console.warn('Chat history too large, not saving');
     }
 }
 
-// === UTILITIES ===
+function loadChatHistory() {
+    try {
+        const saved = localStorage.getItem('student_os_chat_history');
+        if (saved) {
+            chatHistory = JSON.parse(saved);
+            renderChat();
+        }
+    } catch (e) {
+        console.error('Chat history load error:', e);
+    }
+}
+
+// === STATUS MESSAGES ===
 function showStatus(message, type = 'info') {
-    notesStatus.textContent = message;
+    notesStatus.innerHTML = message;
     notesStatus.style.display = 'block';
     
+    // Color coding
     if (type === 'success') {
         notesStatus.style.color = '#10b981';
         notesStatus.style.background = 'rgba(16, 185, 129, 0.2)';
     } else if (type === 'error') {
         notesStatus.style.color = '#ef4444';
         notesStatus.style.background = 'rgba(239, 68, 68, 0.2)';
+    } else {
+        notesStatus.style.color = 'var(--accent-pink)';
+        notesStatus.style.background = 'rgba(255, 117, 140, 0.2)';
     }
     
+    // Auto-hide after 4 seconds
     setTimeout(() => {
         notesStatus.style.display = 'none';
-    }, 3000);
+    }, 4000);
 }
-
-// === EVENT LISTENERS ===
-questionInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        askQuestion();
-    }
-});
-
-notesInput.addEventListener('input', updateNotesInfo);
