@@ -1,274 +1,258 @@
-// js/assistant.js - FIXED VERSION
+console.log('🤖 AI ASSISTANT LOADED!');
 
-console.log('🔧 Assistant script loaded!'); // Debug
+// 🔥 GLOBAL AI INSTANCE
+let aiAssistant = null;
 
-// DOM Elements
-const notesInput = document.getElementById('notes-input');
-const questionInput = document.getElementById('question-input');
-const chatMessages = document.getElementById('chat-messages');
-const notesStatus = document.getElementById('notes-status');
-const notesInfo = document.getElementById('notes-info');
-
-// Global variables
-let chatHistory = [];
-
-// === INIT ON PAGE LOAD ===
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 DOM loaded, initializing...');
-    
-    // Load everything
-    loadNotes();
-    loadChatHistory();
-    updateNotesInfo();
-    
-    // Event listeners
-    questionInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') askQuestion();
-    });
-    
-    notesInput.addEventListener('input', updateNotesInfo);
-    
-    console.log('✅ Assistant fully initialized!');
+    console.log('🔥 Starting AI Assistant...');
+    aiAssistant = new AIBrain();
+    console.log('✅ AI BRAIN ACTIVE!');
 });
 
-// === NOTES FUNCTIONS ===
-function saveNotes() {
-    console.log('💾 Saving notes...');
-    
-    const notes = notesInput.value.trim();
-    
-    if (!notes) {
-        showStatus('⚠️ Please type some notes first!', 'error');
-        return;
+class AIBrain {
+    constructor() {
+        this.notes = '';
+        this.chatHistory = [];
+        this.questionsAsked = 0;
+        this.init();
     }
-    
-    try {
-        // Save to localStorage
-        localStorage.setItem('student_os_notes', notes);
-        
-        // Calculate stats
-        const sentences = notes.split(/[.!?]+/).filter(s => s.trim()).length;
-        showStatus(`✅ Saved! ${sentences} sentences (${Math.round(notes.length/100)} words)`, 'success');
-        updateNotesInfo();
-        
-        console.log('✅ Notes saved successfully');
-        
-    } catch (error) {
-        console.error('❌ Save error:', error);
-        showStatus('❌ Save failed! Check browser storage.', 'error');
-    }
-}
 
-function clearNotes() {
-    if (confirm('🗑️ Clear all notes? This cannot be undone.')) {
-        notesInput.value = '';
-        localStorage.removeItem('student_os_notes');
-        showStatus('🗑️ Notes cleared!', 'info');
-        updateNotesInfo();
-        console.log('🗑️ Notes cleared');
-    }
-}
-
-function loadNotes() {
-    try {
-        const savedNotes = localStorage.getItem('student_os_notes');
-        console.log('📥 Loading notes:', savedNotes ? 'Found' : 'None');
-        
-        if (savedNotes) {
-            notesInput.value = savedNotes;
+    init() {
+        this.getElements();
+        if (!this.allElementsExist()) {
+            console.error('❌ Missing HTML elements');
+            return;
         }
-    } catch (error) {
-        console.error('❌ Load notes error:', error);
-    }
-}
-
-function updateNotesInfo() {
-    try {
-        const notes = localStorage.getItem('student_os_notes') || '';
-        const words = notes.trim().split(/\s+/).length;
         
-        if (notes) {
-            notesInfo.innerHTML = `📊 ${words} words loaded <span style="color: var(--accent-blue);">✓</span>`;
-        } else {
-            notesInfo.textContent = 'No notes loaded';
-        }
-    } catch (error) {
-        console.error('❌ Update info error:', error);
-    }
-}
-
-// === AI QUESTION ANSWERING ===
-function askQuestion() {
-    const question = questionInput.value.trim();
-    console.log('❓ Question:', question);
-    
-    if (!question) {
-        showStatus('⚠️ Please type a question!', 'error');
-        return;
+        this.loadNotes();
+        this.setupEvents();
+        this.updateDisplay();
+        console.log('✅ All systems go!');
     }
 
-    // Add question to chat
-    addMessage('question', question);
-    questionInput.value = '';
-
-    // Check notes
-    const notes = localStorage.getItem('student_os_notes');
-    if (!notes || notes.trim() === '') {
-        addMessage('assistant', '❌ <strong>No notes found!</strong><br>Save some study notes first, then ask questions.');
-        return;
+    getElements() {
+        this.notesInput = document.getElementById('notes-input');
+        this.questionInput = document.getElementById('question-input');
+        this.chatMessages = document.getElementById('chat-messages');
+        this.notesStatus = document.getElementById('notes-status');
+        this.notesInfo = document.getElementById('notes-info');
+        this.notesCount = document.getElementById('notes-count-display');
+        this.chatStatus = document.getElementById('chat-notes-status');
+        this.questionsCount = document.getElementById('questions-count-display');
+        this.saveBtn = document.getElementById('save-notes-btn');
+        this.clearBtn = document.getElementById('clear-notes-btn');
+        this.sendBtn = document.getElementById('send-btn');
     }
 
-    // Show searching
-    const searchId = addMessage('assistant', '🔍 Searching your notes...');
-    
-    // Fake delay for realism
-    setTimeout(() => {
-        removeMessage(searchId);
-        const answer = findBestAnswer(question, notes);
-        addMessage('assistant', answer);
-        saveChatHistory();
-    }, 500);
-}
-
-function findBestAnswer(question, notes) {
-    console.log('🔍 Finding answer for:', question);
-    
-    // Clean and split notes into sentences
-    const sentences = notes
-        .split(/[\n.!?]+/)
-        .map(s => s.trim())
-        .filter(s => s.length > 15) // Meaningful sentences only
-        .map(s => s.toLowerCase());
-    
-    // Extract question keywords (3+ letters)
-    const keywords = question
-        .toLowerCase()
-        .replace(/[^\w\s]/g, ' ')
-        .split(/\s+/)
-        .filter(word => word.length >= 3);
-    
-    console.log('Keywords:', keywords);
-    console.log('Sentences found:', sentences.length);
-    
-    if (keywords.length === 0) {
-        return '🤔 Try asking with specific words from your notes!';
+    allElementsExist() {
+        return this.notesInput && this.questionInput && this.chatMessages && 
+               this.notesStatus && this.saveBtn && this.sendBtn;
     }
-    
-    // Score each sentence
-    let bestSentence = null;
-    let bestScore = 0;
-    
-    sentences.forEach(sentence => {
-        let score = 0;
-        
-        // Count keyword matches
-        keywords.forEach(keyword => {
-            if (sentence.includes(keyword)) {
-                score += (keyword.length / 3); // Longer matches worth more
-            }
+
+    setupEvents() {
+        // Question input
+        this.questionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.askQuestion();
         });
         
-        // Multiple keyword bonus
-        const matches = keywords.filter(kw => sentence.includes(kw)).length;
-        if (matches >= 2) score += 2;
+        // Save button
+        this.saveBtn.addEventListener('click', () => this.saveNotes());
         
-        if (score > bestScore && score >= 1.5) {
-            bestScore = score;
-            bestSentence = sentence;
-        }
-    });
-    
-    if (bestSentence) {
-        // Clean up answer
-        const cleanAnswer = bestSentence.charAt(0).toUpperCase() + bestSentence.slice(1);
-        return `📖 <strong>Found in your notes:</strong><br>"${cleanAnswer}"<br><small>Score: ${Math.round(bestScore*10)/10}</small>`;
-    } else {
-        return `🤔 No good matches found for "${question}".<br>
-        💡 <strong>Tips:</strong><br>
-        - Use keywords from your notes<br>
-        - Add more detailed notes<br>
-        - Try synonyms`;
+        // Clear button  
+        this.clearBtn.addEventListener('click', () => this.clearNotes());
+        
+        // Send button
+        this.sendBtn.addEventListener('click', () => this.askQuestion());
+        
+        // Live notes counter
+        this.notesInput.addEventListener('input', () => {
+            setTimeout(() => this.updateDisplay(), 100);
+        });
     }
-}
 
-// === CHAT SYSTEM ===
-function addMessage(type, text) {
-    const id = Date.now();
-    const message = {
-        id: id,
-        type: type,
-        text: text,
-        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
-    };
-    
-    chatHistory.push(message);
-    renderChat();
-    return id;
-}
+    saveNotes() {
+        this.notes = this.notesInput.value.trim();
+        if (!this.notes) {
+            this.showStatus('⚠️ No notes to save!', 'error');
+            return;
+        }
+        
+        localStorage.setItem('ai_notes', this.notes);
+        const stats = this.getStats();
+        this.showStatus(`✅ SAVED! ${stats.words} words`, 'success');
+        this.updateDisplay();
+        console.log('💾 Notes saved:', stats.words, 'words');
+    }
 
-function removeMessage(id) {
-    chatHistory = chatHistory.filter(msg => msg.id != id);
-    renderChat();
-}
+    clearNotes() {
+        if (confirm('🗑️ Delete all notes?')) {
+            this.notesInput.value = '';
+            this.notes = '';
+            localStorage.removeItem('ai_notes');
+            this.showStatus('🗑️ Cleared!', 'info');
+            this.updateDisplay();
+        }
+    }
 
-function renderChat() {
-    // Limit to last 15 messages
-    chatHistory = chatHistory.slice(-15);
-    
-    chatMessages.innerHTML = chatHistory.map(msg => {
-        return `
+    loadNotes() {
+        const saved = localStorage.getItem('ai_notes');
+        if (saved) {
+            this.notes = saved;
+            this.notesInput.value = saved;
+            this.updateDisplay();
+            console.log('📥 Loaded saved notes');
+        }
+    }
+
+    askQuestion() {
+        const question = this.questionInput.value.trim();
+        if (!question) {
+            this.showStatus('⚠️ Enter a question!', 'error');
+            return;
+        }
+
+        if (!this.notes) {
+            this.addMessage('user', question);
+            this.addMessage('assistant', `❌ No notes saved!<br>
+                💡 <strong>Steps:</strong><br>
+                1. Type notes above<br>
+                2. Click 💾 Save Notes<br>
+                3. Ask again!`);
+            this.questionInput.value = '';
+            return;
+        }
+
+        // Add question to chat
+        this.addMessage('user', question);
+        this.questionInput.value = '';
+        this.questionsAsked++;
+
+        // Show AI thinking
+        const thinkingId = this.addMessage('assistant', '🧠 AI searching notes...');
+
+        // AI Response
+        setTimeout(() => {
+            this.removeMessage(thinkingId);
+            const answer = this.findAnswer(question);
+            this.addMessage('assistant', answer);
+            this.updateDisplay();
+        }, 600);
+    }
+
+    findAnswer(question) {
+        console.log('🔍 Searching for:', question);
+        
+        // Split notes into sentences
+        const sentences = this.notes
+            .split(/[\n.!?]+/)
+            .map(s => s.trim())
+            .filter(s => s.length > 15);
+
+        // Keywords from question
+        const qWords = question.toLowerCase()
+            .replace(/[^\w\s]/g, '')
+            .split(/\s+/)
+            .filter(w => w.length > 2);
+
+        let bestMatch = '';
+        let bestScore = 0;
+
+        sentences.forEach(sentence => {
+            let score = 0;
+            qWords.forEach(word => {
+                if (sentence.toLowerCase().includes(word)) {
+                    score += word.length / 10;
+                }
+            });
+
+            if (score > bestScore && score > 0.8) {
+                bestScore = score;
+                bestMatch = sentence;
+            }
+        });
+
+        if (bestMatch) {
+            return `📖 <strong>Found in notes:</strong><br>
+                "${this.capitalize(bestMatch)}"<br>
+                <small>🔍 Match score: ${Math.round(bestScore * 100)}%</small>`;
+        }
+
+        return `🤔 No exact match for "${question}"<br>
+            💡 <strong>Tips:</strong><br>
+            - Use exact words from notes<br>
+            - Add more detailed notes<br>
+            - Try related terms`;
+    }
+
+    addMessage(type, text) {
+        const message = {
+            id: Date.now(),
+            type: type,
+            text: text,
+            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+        };
+        this.chatHistory.push(message);
+        this.renderChat();
+        return message.id;
+    }
+
+    removeMessage(id) {
+        this.chatHistory = this.chatHistory.filter(msg => msg.id !== id);
+        this.renderChat();
+    }
+
+    renderChat() {
+        // Keep last 12 messages
+        this.chatHistory = this.chatHistory.slice(-12);
+        
+        this.chatMessages.innerHTML = this.chatHistory.map(msg => `
             <div class="message ${msg.type}">
                 <time>${msg.time}</time>
                 ${msg.text}
             </div>
-        `;
-    }).join('');
-    
-    // Auto-scroll to bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-function saveChatHistory() {
-    try {
-        localStorage.setItem('student_os_chat_history', JSON.stringify(chatHistory.slice(-20)));
-    } catch (e) {
-        console.warn('Chat history too large, not saving');
+        `).join('');
+        
+        // Auto scroll
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
     }
-}
 
-function loadChatHistory() {
-    try {
-        const saved = localStorage.getItem('student_os_chat_history');
-        if (saved) {
-            chatHistory = JSON.parse(saved);
-            renderChat();
+    updateDisplay() {
+        const stats = this.getStats();
+        
+        // Notes info
+        if (stats.words > 0) {
+            this.notesInfo.textContent = 'Saved ✓';
+            this.notesCount.textContent = `${stats.words} words`;
+            this.chatStatus.textContent = `${stats.words} words loaded`;
+        } else {
+            this.notesInfo.textContent = 'Not saved';
+            this.notesCount.textContent = '0 words';
+            this.chatStatus.textContent = 'No notes';
         }
-    } catch (e) {
-        console.error('Chat history load error:', e);
+        
+        // Questions count
+        this.questionsCount.textContent = `${this.questionsAsked} asked`;
+    }
+
+    getStats() {
+        const text = this.notesInput.value.trim();
+        const words = text.split(/\s+/).filter(w => w.length > 0).length;
+        return { words };
+    }
+
+    showStatus(message, type = 'info') {
+        this.notesStatus.textContent = message;
+        this.notesStatus.style.color = type === 'success' ? '#10b981' : 
+                                     type === 'error' ? '#ef4444' : 'var(--accent-blue)';
+        this.notesStatus.style.display = 'block';
+        setTimeout(() => {
+            this.notesStatus.style.display = 'none';
+        }, 2500);
+    }
+
+    capitalize(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
     }
 }
 
-// === STATUS MESSAGES ===
-function showStatus(message, type = 'info') {
-    notesStatus.innerHTML = message;
-    notesStatus.style.display = 'block';
-    
-    // Color coding
-    if (type === 'success') {
-        notesStatus.style.color = '#10b981';
-        notesStatus.style.background = 'rgba(16, 185, 129, 0.2)';
-    } else if (type === 'error') {
-        notesStatus.style.color = '#ef4444';
-        notesStatus.style.background = 'rgba(239, 68, 68, 0.2)';
-    } else {
-        notesStatus.style.color = 'var(--accent-pink)';
-        notesStatus.style.background = 'rgba(255, 117, 140, 0.2)';
-    }
-    
-    // Auto-hide after 4 seconds
-    setTimeout(() => {
-        notesStatus.style.display = 'none';
-    }, 4000);
-}
-
-
+console.log('🎉 AI ASSISTANT READY!');
