@@ -3,76 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Assistant - Student OS</title>
+    <title>🤖 AI Assistant - Student OS</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav>
-        <div class="logo">Student OS</div>
+    <nav class="glass-nav">
+        <div class="logo">🤖 Student OS</div>
         <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="pomodoro.html">Pomodoro</a>
-            <a href="calculator.html">Calc</a>
-            <a href="assistant.html" class="active">AI Assistant</a>
-            <a href="search.html">Search</a>
-            <a href="storage.html">Storage</a>
+            <a href="index.html">🏠 Home</a>
+            <a href="pomodoro.html">⏱️ Pomodoro</a>
+            <a href="calculator.html">🧮 Calc</a>
+            <a href="assistant.html" class="active">🤖 AI</a>
+            <a href="search.html">🔍 Search</a>
+            <a href="storage.html">💾 Storage</a>
         </div>
     </nav>
 
     <div class="container">
-        <div class="glass-panel">
-            <h1 style="margin-bottom: 1rem; color: var(--accent-blue);">📚 Notes-Powered Study Assistant</h1>
-            <p style="color: var(--text-secondary); margin-bottom: 2rem;">
-                Paste your study notes on the left, ask questions on the right. 
-                I'll find answers from YOUR notes instantly!
-            </p>
+        <div class="glass-panel hero">
+            <h1 class="hero-title">🤖 Super AI Assistant</h1>
+            <p class="hero-subtitle">Paste notes → Save → Ask = Instant answers!</p>
         </div>
 
-        <div class="glass-panel assistant-container">
-            <!-- Notes Section -->
-            <div class="notes-section">
-                <h3>📝 Your Study Notes</h3>
-                <textarea 
-                    class="notes-textarea" 
-                    id="notes-input" 
-                    placeholder="Paste your lecture notes, textbook content, or study material here...
-                    
-Example:
-Photosynthesis is the process where plants convert sunlight into energy.
-It occurs in chloroplasts using chlorophyll.
-Equation: 6CO2 + 6H2O → C6H12O6 + 6O2"
-                ></textarea>
-                <div style="margin-top: 1rem;">
-                    <button class="btn btn-primary" onclick="saveNotes()">💾 Save Notes</button>
-                    <button class="btn btn-secondary" onclick="clearNotes()" style="margin-left: 1rem;">🗑️ Clear</button>
+        <div class="glass-panel">
+            <div class="assistant-container">
+                <!-- NOTES SECTION -->
+                <div class="notes-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0; color: var(--accent-blue);">📚 Your Notes</h3>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button id="save-notes-btn" class="btn btn-primary">💾 Save</button>
+                            <button id="clear-notes-btn" class="btn btn-secondary">🗑️ Clear</button>
+                        </div>
+                    </div>
+                    <textarea 
+                        id="notes-input" 
+                        class="notes-textarea" 
+                        placeholder="📝 Type or paste your study notes here...
+Examples:
+- Photosynthesis: Plants convert CO2 + H2O + sunlight → glucose + O2
+- Mitochondria: Powerhouse of the cell
+- Deadlock: 4 conditions (mutual exclusion, hold/wait, no preemption, circular wait)"
+                        rows="14"
+                    ></textarea>
+                    <div style="margin-top: 1rem; font-size: 0.9rem; display: flex; justify-content: space-between;">
+                        <span id="notes-count-display">0 words</span>
+                        <span id="notes-info">Not saved</span>
+                    </div>
+                    <div id="notes-status" class="status" style="display: none; margin-top: 0.5rem;"></div>
                 </div>
-                <div id="notes-status" class="status" style="display: none;"></div>
-            </div>
 
-            <!-- Chat Section -->
-            <div class="chat-container">
-                <div class="chat-header">
-                    <h3>💬 Ask Questions</h3>
-                    <span id="notes-info" style="font-size: 0.85rem; color: var(--text-secondary);">No notes loaded</span>
-                </div>
-                
-                <div class="chat-messages" id="chat-messages"></div>
-                
-                <div class="chat-input-container">
-                    <input 
-                        type="text" 
-                        class="chat-input" 
-                        id="question-input" 
-                        placeholder="What is photosynthesis? →"
-                    >
-                    <button class="btn btn-primary" onclick="askQuestion()">Ask</button>
+                <!-- CHAT SECTION -->
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <h3 style="margin: 0;">💬 AI Chat</h3>
+                        <div style="font-size: 0.85rem;">
+                            <span id="chat-notes-status">No notes</span>
+                            <span id="questions-count-display" style="margin-left: 1rem;">0 asked</span>
+                        </div>
+                    </div>
+                    <div id="chat-messages" class="chat-messages">
+                        <div class="message assistant">
+                            <time>🤖</time>
+                            <strong>Welcome! 👋</strong><br>
+                            <small>1️⃣ Notes → 2️⃣ Save → 3️⃣ Ask = Magic! ✨</small>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input id="question-input" class="chat-input" placeholder="What is photosynthesis?">
+                        <button id="send-btn" class="btn btn-primary">Ask AI</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="js/assistant.js"></script>
 </body>
 </html>
