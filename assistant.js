@@ -270,3 +270,5 @@ function showStatus(message, type = 'info') {
         notesStatus.style.display = 'none';
     }, 4000);
 }
+
+
