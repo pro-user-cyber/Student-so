@@ -3,64 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scientific Calculator - Student OS</title>
+    <title>Scientific Calculator</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root{--transition:all .2s cubic-bezier(.4,0,.2,1);--shadow-lg:0 10px 25px rgba(0,0,0,.3)}
+        .app-layout{min-height:100vh;display:flex}
+        .sidebar{width:280px;background:rgba(255,255,255,.05);backdrop-filter:blur(10px);border-right:1px solid var(--glass-border);padding:2rem 0;position:fixed;height:100vh;left:0;top:0;z-index:1000;transition:var(--transition)}
+        .sidebar .logo{padding:0 2rem 2rem;display:flex;align-items:center;gap:.75rem;font-size:1.5rem;font-weight:800}
+        .logo-icon{font-size:1.8rem;background:linear-gradient(135deg,var(--accent-pink),var(--accent-blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .nav-menu{list-style:none;padding:0 1rem}
+        .nav-link{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;color:var(--text-muted);text-decoration:none;border-radius:12px;transition:var(--transition);font-weight:600}
+        .nav-link:hover,.nav-link.active{background:rgba(255,255,255,.1);color:var(--accent-blue);transform:translateX(5px)}
+        .main-content{flex:1;margin-left:280px;padding:2rem;min-height:100vh;transition:var(--transition)}
+        .toggle-sidebar{position:fixed;top:1rem;left:1rem;z-index:1001;background:var(--glass-bg);backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:12px;padding:.75rem;color:var(--text-main);font-size:1.2rem;cursor:pointer;transition:var(--transition);display:none}
+        .toggle-sidebar:hover{background:rgba(255,255,255,.15);transform:scale(1.05)}
+        .content-header{text-align:center;margin-bottom:3rem}
+        .page-title{font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,var(--accent-pink),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+        .glass-card{background:var(--glass-bg);backdrop-filter:blur(15px);border:1px solid var(--glass-border);border-radius:var(--card-radius);padding:2.5rem;max-width:420px;margin:0 auto;box-shadow:0 20px 40px rgba(0,0,0,.4)}
+        .calc-display-container{position:relative;margin-bottom:1.5rem}
+        .calc-display{width:100%;height:90px;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:var(--card-radius);padding:0 1.5rem;font-size:2.8rem;font-weight:300;text-align:right;color:var(--text-primary);letter-spacing:1px;outline:none}
+        .calc-mode{position:absolute;right:1rem;top:1rem;background:rgba(126,184,234,.2);color:var(--accent-blue);padding:.4rem .8rem;border-radius:20px;font-size:.8rem;font-weight:600;backdrop-filter:blur(10px)}
+        .calc-toggle{display:flex;gap:.75rem;margin-bottom:1.5rem}
+        .calc-mode-btn{flex:1;padding:.75rem 1rem;background:rgba(255,255,255,.08);border:1px solid var(--glass-border);color:var(--text-secondary);border-radius:12px;cursor:pointer;transition:var(--transition);font-weight:600;font-size:.9rem}
+        .calc-mode-btn.active,.calc-mode-btn:hover{background:var(--accent-blue);color:#fff;border-color:var(--accent-blue);transform:translateY(-2px)}
+        .calc-grid{display:none;grid-template-columns:repeat(4,1fr);gap:1rem}
+        .calc-grid.active{display:grid}
+        .calc-btn{height:68px;border:none;border-radius:16px;font-size:1.3rem;font-weight:600;cursor:pointer;transition:var(--transition);font-family:'Nunito',sans-serif}
+        .calc-btn:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+        .calc-btn:active{transform:scale(.97)}
+        .calc-btn.num{background:rgba(255,255,255,.1);color:var(--text-primary)}
+        .calc-btn.operator{background:rgba(126,184,234,.25);color:var(--accent-blue)}
+        .calc-btn.function{background:rgba(161,140,209,.25);color:var(--accent-purple)}
+        .calc-btn.constant{background:rgba(16,185,129,.25);color:#10b981}
+        .calc-btn.equals{background:linear-gradient(135deg,var(--accent-blue),var(--accent-purple));color:#fff;grid-row:span 2;font-size:1.5rem;font-weight:800}
+        .calc-btn.clear{background:rgba(239,68,68,.25);color:#ef4444}
+        .calc-btn.clear:hover{background:rgba(239,68,68,.35)}
+        .calc-btn.backspace{background:rgba(245,158,11,.25);color:#f59e0b}
+        .calc-btn.zero{grid-column:span 2}
+        @media (max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main-content{margin-left:0;padding:1rem}.toggle-sidebar{display:block}.glass-card{padding:2rem 1.5rem;max-width:100%}.calc-btn{height:60px;font-size:1.2rem}.calc-display{font-size:2.2rem;height:75px}.page-title{font-size:2rem}}
+    </style>
 </head>
 <body>
     <div class="app-layout">
-        <!-- 🧼 SIDEBAR (Same as main app) -->
         <nav class="sidebar" id="sidebar">
             <div class="logo">
                 <i class="fas fa-calculator logo-icon"></i>
                 <span>Student OS</span>
             </div>
-            
             <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="index.html" class="nav-link">
-                        <i class="fas fa-home nav-icon"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link active">
-                        <i class="fas fa-calculator nav-icon"></i>
-                        <span>Calculator</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="index.html#notes" class="nav-link">
-                        <i class="fas fa-sticky-note nav-icon"></i>
-                        <span>Notes</span>
-                    </a>
-                </li>
+                <li class="nav-item"><a href="index.html" class="nav-link"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+                <li class="nav-item"><a href="#" class="nav-link active"><i class="fas fa-calculator"></i><span>Calculator</span></a></li>
             </ul>
         </nav>
 
-        <!-- MAIN CONTENT -->
-        <main class="main-content" id="mainContent">
-            <button class="toggle-sidebar" id="toggleSidebar">
-                <i class="fas fa-bars"></i>
-            </button>
+        <main class="main-content">
+            <button class="toggle-sidebar" id="toggleSidebar"><i class="fas fa-bars"></i></button>
 
-            <!-- CALCULATOR SECTION -->
             <section class="content-section active">
                 <div class="content-header">
                     <h1 class="page-title">🧮 Scientific Calculator</h1>
-                    <div style="font-size: 0.9rem; color: var(--text-secondary);">
-                        Perfect for algebra, trigonometry & calculus
-                    </div>
                 </div>
 
-                <div class="glass-card" style="max-width: 400px; margin: 0 auto;">
-                    <!-- Display -->
+                <div class="glass-card">
                     <div class="calc-display-container">
                         <input type="text" id="calcDisplay" class="calc-display" readonly placeholder="0">
                         <div class="calc-mode" id="calcMode">DEG</div>
                     </div>
 
-                    <!-- Toggle Buttons -->
                     <div class="calc-toggle">
                         <button id="basicModeBtn" class="calc-mode-btn active">Basic</button>
                         <button id="scientificModeBtn" class="calc-mode-btn">Scientific</button>
@@ -68,75 +78,44 @@
 
                     <!-- BASIC MODE -->
                     <div id="basicGrid" class="calc-grid active">
-                        <button class="calc-btn clear" onclick="calcActions('clear')">
-                            <i class="fas fa-trash"></i> C
-                        </button>
-                        <button class="calc-btn operator" onclick="calcActions('/')">/</button>
-                        <button class="calc-btn operator" onclick="calcActions('*')">×</button>
-                        <button class="calc-btn backspace" onclick="calcActions('backspace')">
-                            <i class="fas fa-backspace"></i>
-                        </button>
-                        
-                        <button class="calc-btn num" onclick="calcActions('7')">7</button>
-                        <button class="calc-btn num" onclick="calcActions('8')">8</button>
-                        <button class="calc-btn num" onclick="calcActions('9')">9</button>
-                        <button class="calc-btn operator" onclick="calcActions('-")">-</button>
-                        
-                        <button class="calc-btn num" onclick="calcActions('4')">4</button>
-                        <button class="calc-btn num" onclick="calcActions('5')">5</button>
-                        <button class="calc-btn num" onclick="calcActions('6')">6</button>
-                        <button class="calc-btn operator" onclick="calcActions('+')">+</button>
-                        
-                        <button class="calc-btn num zero" onclick="calcActions('0')">0</button>
-                        <button class="calc-btn num" onclick="calcActions('.')">.</button>
-                        <button class="calc-btn equals" onclick="calcActions('equals')" rowspan="2">
-                            <i class="fas fa-equals"></i>
-                        </button>
-                        
-                        <button class="calc-btn num" onclick="calcActions('1')">1</button>
-                        <button class="calc-btn num" onclick="calcActions('2')">2</button>
-                        <button class="calc-btn num" onclick="calcActions('3')">3</button>
+                        <button class="calc-btn clear" onclick="calc.clear()">C</button>
+                        <button class="calc-btn operator" onclick="calc.append('/')">/</button>
+                        <button class="calc-btn operator" onclick="calc.append('*')">×</button>
+                        <button class="calc-btn operator" onclick="calc.append('-')">-</button>
+                        <button class="calc-btn num" onclick="calc.append('7')">7</button>
+                        <button class="calc-btn num" onclick="calc.append('8')">8</button>
+                        <button class="calc-btn num" onclick="calc.append('9')">9</button>
+                        <button class="calc-btn operator" onclick="calc.append('+')">+</button>
+                        <button class="calc-btn num" onclick="calc.append('4')">4</button>
+                        <button class="calc-btn num" onclick="calc.append('5')">5</button>
+                        <button class="calc-btn num" onclick="calc.append('6')">6</button>
+                        <button class="calc-btn equals" onclick="calc.calculate()" rowspan="2"><i class="fas fa-equals"></i></button>
+                        <button class="calc-btn num zero" onclick="calc.append('0')">0</button>
+                        <button class="calc-btn num" onclick="calc.append('.')">.</button>
+                        <button class="calc-btn num" onclick="calc.append('1')">1</button>
+                        <button class="calc-btn num" onclick="calc.append('2')">2</button>
+                        <button class="calc-btn num" onclick="calc.append('3')">3</button>
                     </div>
 
                     <!-- SCIENTIFIC MODE -->
                     <div id="scientificGrid" class="calc-grid">
-                        <!-- First Row -->
-                        <button class="calc-btn clear" onclick="calcActions('clearAll')">CE</button>
-                        <button class="calc-btn function" onclick="calcActions('sin')">sin</button>
-                        <button class="calc-btn function" onclick="calcActions('cos')">cos</button>
-                        <button class="calc-btn operator" onclick="calcActions('/')">/</button>
-                        
-                        <!-- Second Row -->
-                        <button class="calc-btn backspace" onclick="calcActions('backspace')">
-                            <i class="fas fa-backspace"></i>
-                        </button>
-                        <button class="calc-btn function" onclick="calcActions('tan')">tan</button>
-                        <button class="calc-btn function" onclick="calcActions('log')">log</button>
-                        <button class="calc-btn operator" onclick="calcActions('*')">×</button>
-                        
-                        <!-- Third Row -->
-                        <button class="calc-btn" onclick="calcActions('(')">(</button>
-                        <button class="calc-btn function" onclick="calcActions('sqrt')">√</button>
-                        <button class="calc-btn constant" onclick="calcActions('pi')">π</button>
-                        <button class="calc-btn operator" onclick="calcActions('-')">-</button>
-                        
-                        <!-- Fourth Row -->
-                        <button class="calc-btn" onclick="calcActions(')')">)</button>
-                        <button class="calc-btn function" onclick="calcActions('pow')">xʸ</button>
-                        <button class="calc-btn constant" onclick="calcActions('e')">e</button>
-                        <button class="calc-btn operator" onclick="calcActions('+')">+</button>
-                        
-                        <!-- Numbers (same layout) -->
-                        <button class="calc-btn num" onclick="calcActions('7')">7</button>
-                        <button class="calc-btn num" onclick="calcActions('8')">8</button>
-                        <button class="calc-btn num" onclick="calcActions('9')">9</button>
-                        <button class="calc-btn equals" onclick="calcActions('equals')">
-                            <i class="fas fa-equals"></i>
-                        </button>
-                        
-                        <button class="calc-btn num zero" onclick="calcActions('0')">0</button>
-                        <button class="calc-btn num" onclick="calcActions('.')">.</button>
-                        <button class="calc-btn function" onclick="calcActions('ln')">ln</button>
+                        <button class="calc-btn clear" onclick="calc.clearAll()">CE</button>
+                        <button class="calc-btn function" onclick="calc.sin()">sin</button>
+                        <button class="calc-btn function" onclick="calc.cos()">cos</button>
+                        <button class="calc-btn operator" onclick="calc.append('/')">/</button>
+                        <button class="calc-btn" onclick="calc.append('(')">(</button>
+                        <button class="calc-btn function" onclick="calc.log()">log</button>
+                        <button class="calc-btn constant" onclick="calc.append('3.14159')">π</button>
+                        <button class="calc-btn operator" onclick="calc.append('*')">×</button>
+                        <button class="calc-btn num" onclick="calc.append('7')">7</button>
+                        <button class="calc-btn num" onclick="calc.append('8')">8</button>
+                        <button class="calc-btn num" onclick="calc.append('9')">9</button>
+                        <button class="calc-btn equals" onclick="calc.calculate()"><i class="fas fa-equals"></i></button>
+                        <button class="calc-btn num zero" onclick="calc.append('0')">0</button>
+                        <button class="calc-btn num" onclick="calc.append('.')">.</button>
+                        <button class="calc-btn num" onclick="calc.append('1')">1</button>
+                        <button class="calc-btn num" onclick="calc.append('2')">2</button>
+                        <button class="calc-btn num" onclick="calc.append('3')">3</button>
                     </div>
                 </div>
             </section>
@@ -144,279 +123,46 @@
     </div>
 
     <script>
-        class ScientificCalculator {
-            constructor() {
-                this.display = document.getElementById('calcDisplay');
-                this.currentInput = '0';
-                this.mode = 'basic'; // 'basic' or 'scientific'
-                this.isDegreeMode = true;
-                this.init();
-            }
-
+        const calc = {
+            display: document.getElementById('calcDisplay'),
+            input: '0',
             init() {
-                this.bindEvents();
-                this.updateDisplay();
-            }
-
-            bindEvents() {
-                // Mode toggle
-                document.getElementById('basicModeBtn').onclick = () => this.switchMode('basic');
-                document.getElementById('scientificModeBtn').onclick = () => this.switchMode('scientific');
-                
-                // Keyboard support
-                document.addEventListener('keydown', (e) => this.handleKeyboard(e));
-            }
-
-            switchMode(newMode) {
-                this.mode = newMode;
-                document.getElementById('basicModeBtn').classList.toggle('active', newMode === 'basic');
-                document.getElementById('scientificModeBtn').classList.toggle('active', newMode === 'scientific');
-                document.getElementById('basicGrid').classList.toggle('active', newMode === 'basic');
-                document.getElementById('scientificGrid').classList.toggle('active', newMode === 'scientific');
-            }
-
-            calcActions(action) {
-                switch(action) {
-                    case 'clear': this.clear(); break;
-                    case 'clearAll': this.clearAll(); break;
-                    case 'backspace': this.backspace(); break;
-                    case 'equals': this.calculate(); break;
-                    case 'sin': this.mathFunction('sin'); break;
-                    case 'cos': this.mathFunction('cos'); break;
-                    case 'tan': this.mathFunction('tan'); break;
-                    case 'log': this.mathFunction('log10'); break;
-                    case 'ln': this.mathFunction('log'); break;
-                    case 'sqrt': this.mathFunction('sqrt'); break;
-                    case 'pow': this.mathFunction('pow'); break;
-                    case 'pi': this.appendConstant(Math.PI); break;
-                    case 'e': this.appendConstant(Math.E); break;
-                    default:
-                        if (['0','1','2','3','4','5','6','7','8','9','.','+','-','*','/','(',')'].includes(action)) {
-                            this.appendNumber(action);
-                        }
-                }
-            }
-
-            appendNumber(num) {
-                if (this.currentInput === '0' || this.currentInput === 'Error') {
-                    this.currentInput = num;
-                } else {
-                    this.currentInput += num;
-                }
-                this.updateDisplay();
-            }
-
-            appendConstant(value) {
-                this.currentInput += value.toFixed(10);
-                this.updateDisplay();
-            }
-
-            mathFunction(fn) {
-                try {
-                    let value = parseFloat(this.currentInput) || 0;
-                    
-                    switch(fn) {
-                        case 'sin': 
-                            value = this.isDegreeMode ? this.degToRad(value) : value;
-                            this.currentInput = Math.sin(value).toString();
-                            break;
-                        case 'cos': 
-                            value = this.isDegreeMode ? this.degToRad(value) : value;
-                            this.currentInput = Math.cos(value).toString();
-                            break;
-                        case 'tan': 
-                            value = this.isDegreeMode ? this.degToRad(value) : value;
-                            this.currentInput = Math.tan(value).toString();
-                            break;
-                        case 'log10': this.currentInput = Math.log10(value).toString(); break;
-                        case 'log': this.currentInput = Math.log(value).toString(); break;
-                        case 'sqrt': this.currentInput = Math.sqrt(value).toString(); break;
-                        case 'pow': 
-                            this.currentInput = `Math.pow(${value}, `;
-                            break;
-                    }
-                    this.updateDisplay();
-                } catch (e) {
-                    this.showError();
-                }
-            }
-
-            clear() {
-                this.currentInput = this.currentInput.slice(0, -1) || '0';
-                this.updateDisplay();
-            }
-
-            clearAll() {
-                this.currentInput = '0';
-                this.updateDisplay();
-            }
-
-            backspace() {
-                this.currentInput = this.currentInput.slice(0, -1) || '0';
-                this.updateDisplay();
-            }
-
+                document.getElementById('basicModeBtn').onclick = () => this.toggleMode('basic');
+                document.getElementById('scientificModeBtn').onclick = () => this.toggleMode('scientific');
+                document.getElementById('toggleSidebar').onclick = () => document.getElementById('sidebar').classList.toggle('open');
+                document.addEventListener('keydown', e => this.keyPress(e));
+                this.update();
+            },
+            toggleMode(mode) {
+                document.getElementById('basicGrid').classList.toggle('active', mode === 'basic');
+                document.getElementById('scientificGrid').classList.toggle('active', mode === 'scientific');
+                document.querySelectorAll('.calc-mode-btn').forEach(btn => btn.classList.toggle('active', btn.id.includes(mode)));
+            },
+            append(val) {
+                this.input = this.input === '0' || this.input === 'Error' ? val : this.input + val;
+                this.update();
+            },
+            clear() { this.input = this.input.slice(0, -1) || '0'; this.update(); },
+            clearAll() { this.input = '0'; this.update(); },
+            sin() { this.input = Math.sin(parseFloat(this.input) * Math.PI / 180).toString(); this.update(); },
+            cos() { this.input = Math.cos(parseFloat(this.input) * Math.PI / 180).toString(); this.update(); },
+            log() { this.input = Math.log10(parseFloat(this.input)).toString(); this.update(); },
             calculate() {
                 try {
-                    // Replace × with * for eval
-                    let expression = this.currentInput.replace(/×/g, '*');
-                    let result = eval(expression);
-                    
-                    // Round to reasonable precision
-                    if (Math.abs(result) < 1e-10) result = 0;
-                    this.currentInput = result.toString();
-                    this.updateDisplay();
-                } catch (error) {
-                    this.showError();
-                }
+                    let result = eval(this.input.replace(/×/g, '*'));
+                    this.input = Math.abs(result) < 1e-10 ? '0' : result.toString();
+                } catch { this.input = 'Error'; }
+                this.update();
+            },
+            update() { this.display.value = this.input; },
+            keyPress(e) {
+                if (/[0-9.]/.test(e.key)) this.append(e.key);
+                else if ('+-*/'.includes(e.key)) this.append(e.key);
+                else if (e.key === 'Enter') this.calculate();
+                else if (e.key === 'Escape') this.clearAll();
             }
-
-            showError() {
-                this.currentInput = 'Error';
-                this.updateDisplay();
-            }
-
-            updateDisplay() {
-                this.display.value = this.currentInput;
-            }
-
-            degToRad(deg) {
-                return deg * Math.PI / 180;
-            }
-
-            handleKeyboard(e) {
-                const key = e.key;
-                if (key >= '0' && key <= '9' || key === '.') {
-                    e.preventDefault();
-                    this.appendNumber(key);
-                } else if (['+', '-', '*', '/'].includes(key)) {
-                    e.preventDefault();
-                    this.appendNumber(key);
-                } else if (key === 'Enter' || key === '=') {
-                    e.preventDefault();
-                    this.calculate();
-                } else if (key === 'Escape') {
-                    this.clearAll();
-                } else if (key === 'Backspace') {
-                    e.preventDefault();
-                    this.backspace();
-                }
-            }
-        }
-
-        // Initialize calculator when DOM loads
-        document.addEventListener('DOMContentLoaded', () => {
-            new ScientificCalculator();
-        });
+        };
+        calc.init();
     </script>
-
-    <style>
-        /* Calculator Specific Styles */
-        .calc-display-container {
-            position: relative;
-            margin-bottom: 1rem;
-        }
-
-        .calc-display {
-            width: 100%;
-            height: 80px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 0 1.5rem;
-            font-size: 2.5rem;
-            font-weight: 300;
-            text-align: right;
-            color: var(--text-primary);
-            letter-spacing: 1px;
-        }
-
-        .calc-mode {
-            position: absolute;
-            right: 1rem;
-            top: 1rem;
-            background: rgba(79, 159, 255, 0.2);
-            color: var(--accent-blue);
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .calc-toggle {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .calc-mode-btn {
-            flex: 1;
-            padding: 0.5rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            color: var(--text-secondary);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .calc-mode-btn.active,
-        .calc-mode-btn:hover {
-            background: var(--accent-blue);
-            color: white;
-            border-color: var(--accent-blue);
-        }
-
-        .calc-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            display: none;
-        }
-
-        .calc-grid.active {
-            display: grid;
-        }
-
-        .calc-btn {
-            height: 60px;
-            border: none;
-            border-radius: 16px;
-            font-size: 1.25rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .calc-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .calc-btn:active {
-            transform: scale(0.98);
-        }
-
-        .calc-btn.num { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
-        .calc-btn.operator { background: rgba(79, 159, 255, 0.2); color: var(--accent-blue); }
-        .calc-btn.function { background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); }
-        .calc-btn.constant { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
-        .calc-btn.equals { 
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            color: white;
-            grid-row: span 2;
-        }
-        .calc-btn.clear { background: rgba(239, 68, 68, 0.2); color: var(--danger-red); }
-        .calc-btn.clear:hover { background: rgba(239, 68, 68, 0.3); }
-        .calc-btn.backspace { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
-        .calc-btn.zero { grid-column: span 2; }
-
-        @media (max-width: 480px) {
-            .calc-btn { height: 55px; font-size: 1.1rem; }
-            .calc-display { font-size: 2rem; height: 70px; }
-        }
-    </style>
 </body>
 </html>
