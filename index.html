@@ -3,136 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student OS - Study Toolkit</title>
+    <title>Student OS - Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <nav class="glass-nav">
-        <div class="logo">🎓 Student OS</div>
+    <nav class="glass-panel" style="border-radius: 0 0 20px 20px; margin-bottom: 0;">
+        <div class="logo">Student OS</div>
         <div class="nav-links">
-            <a href="index.html" class="active">🏠 Home</a>
-            <a href="pomodoro.html">⏱️ Pomodoro</a>
-            <a href="calculator.html">🧮 Calculator</a>
-            <a href="assistant.html">🤖 AI Assistant</a>
-            <a href="search.html">🔍 Search</a>
-            <a href="storage.html">💾 Storage</a>
+            <a href="index.html" class="active">Home</a>
+            <a href="pomodoro.html">Pomodoro</a>
+            <a href="calculator.html">Calc</a>
+            <a href="assistant.html">AI</a>
+            <a href="search.html">Search</a>
+            <a href="storage.html">Storage</a>
         </div>
     </nav>
 
     <div class="container">
-        <!-- Hero -->
-        <div class="glass-panel hero">
-            <h1 class="hero-title">🎓 Student OS</h1>
-            <p class="hero-subtitle">
-                Your all-in-one study toolkit. Focus, calculate, learn, search, store.
-            </p>
-            <div style="margin-top: 2rem; font-size: 1.1rem; color: var(--text-secondary);">
-                Built for students • Works offline • Privacy first
-            </div>
-        </div>
+        <h1 style="margin-top: 2rem;">Welcome back, Student!</h1>
+        <p style="color: var(--text-muted);">Select a tool to begin your session.</p>
 
-        <!-- Featured Tools -->
-        <div class="glass-panel">
-            <h2 style="text-align: center; margin-bottom: 2.5rem; color: var(--accent-blue);">
-                🚀 Quick Start
-            </h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
-                
-                <a href="assistant.html" class="glass-panel" style="
-                    text-decoration: none; color: inherit; 
-                    border: 2px solid var(--accent-blue);
-                    transition: all 0.3s ease;
-                " onmouseover="this.style.borderColor='var(--accent-pink); this.style.transform='translateY(-5px)'" 
-                   onmouseout="this.style.borderColor='var(--accent-blue)'; this.style.transform='none'">
-                    <div style="font-size: 3.5rem; text-align: center; margin-bottom: 1rem;">🤖</div>
-                    <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;">AI Assistant</h3>
-                    <p style="color: var(--text-secondary);">Paste notes → Ask questions → Get instant answers</p>
-                </a>
-
-                <a href="pomodoro.html" class="glass-panel" style="
-                    text-decoration: none; color: inherit; 
-                    border: 2px solid var(--accent-pink);
-                    transition: all 0.3s ease;
-                " onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)'" 
-                   onmouseout="this.style.borderColor='var(--accent-pink)'; this.style.transform='none'">
-                    <div style="font-size: 3.5rem; text-align: center; margin-bottom: 1rem;">⏱️</div>
-                    <h3 style="color: var(--accent-pink); margin-bottom: 0.5rem;">Pomodoro Timer</h3>
-                    <p style="color: var(--text-secondary);">25min work → 5min break. Perfect focus sessions</p>
-                </a>
-
-                <a href="search.html" class="glass-panel" style="
-                    text-decoration: none; color: inherit; 
-                    border: 2px solid var(--accent-purple);
-                    transition: all 0.3s ease;
-                " onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)'" 
-                   onmouseout="this.style.borderColor='var(--accent-purple)'; this.style.transform='none'">
-                    <div style="font-size: 3.5rem; text-align: center; margin-bottom: 1rem;">🔍</div>
-                    <h3 style="color: var(--accent-purple); margin-bottom: 0.5rem;">Web Search</h3>
-                    <p style="color: var(--text-secondary);">DuckDuckGo embedded browser. No new tabs needed</p>
-                </a>
-
-            </div>
-        </div>
-
-        <!-- More Tools -->
-        <div class="glass-panel">
-            <h2 style="text-align: center; margin-bottom: 2.5rem; color: var(--accent-pink);">
-                📱 All Tools
-            </h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-                
-                <a href="calculator.html" class="glass-panel" style="
-                    text-decoration: none; color: inherit; 
-                    padding: 1.5rem; text-align: center;
-                    transition: all 0.3s ease;
-                " onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.transform='translateY(-3px)'" 
-                   onmouseout="this.style.background=''; this.style.transform='none'">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">🧮</div>
-                    <h3>Scientific Calculator</h3>
-                    <p style="color: var(--text-secondary);">Math solver with history</p>
-                </a>
-
-                <a href="storage.html" class="glass-panel" style="
-                    text-decoration: none; color: inherit; 
-                    padding: 1.5rem; text-align: center;
-                    transition: all 0.3s ease;
-                " onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.transform='translateY(-3px)'" 
-                   onmouseout="this.style.background=''; this.style.transform='none'">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">💾</div>
-                    <h3>Virtual Drive</h3>
-                    <p style="color: var(--text-secondary);">Drag-drop file storage</p>
-                </a>
-
-            </div>
-        </div>
-
-        <!-- Features -->
-        <div class="glass-panel">
-            <h2 style="text-align: center; margin-bottom: 2rem; color: var(--accent-blue);">
-                ✨ Why Student OS?
-            </h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; text-align: center;">
-                <div>
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
-                    <h3>Lightning Fast</h3>
-                    <p style="color: var(--text-secondary);">No servers, no APIs, pure browser magic</p>
-                </div>
-                <div>
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
-                    <h3>100% Private</h3>
-                    <p style="color: var(--text-secondary);">Your data stays on your device</p>
-                </div>
-                <div>
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">📱</div>
-                    <h3>Mobile Ready</h3>
-                    <p style="color: var(--text-secondary);">Perfect on phone, tablet, desktop</p>
-                </div>
-                <div>
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">💰</div>
-                    <h3>Always Free</h3>
-                    <p style="color: var(--text-secondary);">No accounts, no subscriptions</p>
-                </div>
-            </div>
+        <div class="dashboard-grid">
+            <a href="pomodoro.html" class="tool-card">
+                <div class="tool-icon">⏱️</div>
+                <div class="tool-title">Pomodoro Timer</div>
+            </a>
+            <a href="calculator.html" class="tool-card">
+                <div class="tool-icon">🧮</div>
+                <div class="tool-title">Calculator</div>
+            </a>
+            <a href="assistant.html" class="tool-card">
+                <div class="tool-icon">🤖</div>
+                <div class="tool-title">AI Assistant</div>
+            </a>
+            <a href="search.html" class="tool-card">
+                <div class="tool-icon">🔍</div>
+                <div class="tool-title">Web Search</div>
+            </a>
+            <a href="storage.html" class="tool-card">
+                <div class="tool-icon">💾</div>
+                <div class="tool-title">Storage</div>
+            </a>
         </div>
     </div>
 </body>
