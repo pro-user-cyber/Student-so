@@ -3,136 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Brain Dump - Notes, Files & AI Chat</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Student OS - Study Toolkit</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="app-layout">
-        <!-- 🧼 SIDEBAR -->
-        <nav class="sidebar" id="sidebar">
-            <div class="logo">
-                <i class="fas fa-brain logo-icon"></i>
-                <span>Student OS</span>
+    <nav class="glass-nav">
+        <div class="logo">🎓 Student OS</div>
+        <div class="nav-links">
+            <a href="index.html" class="active">🏠 Home</a>
+            <a href="pomodoro.html">⏱️ Pomodoro</a>
+            <a href="calculator.html">🧮 Calculator</a>
+            <a href="assistant.html">🤖 AI Assistant</a>
+            <a href="search.html">🔍 Search</a>
+            <a href="storage.html">💾 Storage</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Hero -->
+        <div class="glass-panel hero">
+            <h1 class="hero-title">🎓 Student OS</h1>
+            <p class="hero-subtitle">
+                Your all-in-one study toolkit. Focus, calculate, learn, search, store.
+            </p>
+            <div style="margin-top: 2rem; font-size: 1.1rem; color: var(--text-secondary);">
+                Built for students • Works offline • Privacy first
             </div>
-            
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="#" class="nav-link active" data-section="notes">
-                        <i class="fas fa-sticky-note nav-icon"></i>
-                        <span>Notes</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="chat">
-                        <i class="fas fa-robot nav-icon"></i>
-                        <span>AI Chat</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="files">
-                        <i class="fas fa-folder nav-icon"></i>
-                        <span>Files</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+        </div>
 
-        <!-- MAIN CONTENT -->
-        <main class="main-content" id="mainContent">
-            <!-- Mobile Toggle -->
-            <button class="toggle-sidebar" id="toggleSidebar">
-                <i class="fas fa-bars"></i>
-            </button>
+        <!-- Featured Tools -->
+        <div class="glass-panel">
+            <h2 style="text-align: center; margin-bottom: 2.5rem; color: var(--accent-blue);">
+                🚀 Quick Start
+            </h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+                
+                <a href="assistant.html" class="glass-panel" style="
+                    text-decoration: none; color: inherit; 
+                    border: 2px solid var(--accent-blue);
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.borderColor='var(--accent-pink); this.style.transform='translateY(-5px)'" 
+                   onmouseout="this.style.borderColor='var(--accent-blue)'; this.style.transform='none'">
+                    <div style="font-size: 3.5rem; text-align: center; margin-bottom: 1rem;">🤖</div>
+                    <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;">AI Assistant</h3>
+                    <p style="color: var(--text-secondary);">Paste notes → Ask questions → Get instant answers</p>
+                </a>
 
-            <!-- NOTES SECTION (Default Active) -->
-            <section id="notesSection" class="content-section active">
-                <div class="content-header">
-                    <h1 class="page-title">📝 Brain Dump</h1>
-                    <div>
-                        <div class="search-container">
-                            <input type="text" id="notesSearch" class="search-input" placeholder="Search your notes...">
-                            <i class="fas fa-search search-icon"></i>
-                        </div>
-                    </div>
+                <a href="pomodoro.html" class="glass-panel" style="
+                    text-decoration: none; color: inherit; 
+                    border: 2px solid var(--accent-pink);
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)'" 
+                   onmouseout="this.style.borderColor='var(--accent-pink)'; this.style.transform='none'">
+                    <div style="font-size: 3.5rem; text-align: center; margin-bottom: 1rem;">⏱️</div>
+                    <h3 style="color: var(--accent-pink); margin-bottom: 0.5rem;">Pomodoro Timer</h3>
+                    <p style="color: var(--text-secondary);">25min work → 5min break. Perfect focus sessions</p>
+                </a>
+
+                <a href="search.html" class="glass-panel" style="
+                    text-decoration: none; color: inherit; 
+                    border: 2px solid var(--accent-purple);
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)'" 
+                   onmouseout="this.style.borderColor='var(--accent-purple)'; this.style.transform='none'">
+                    <div style="font-size: 3.5rem; text-align: center; margin-bottom: 1rem;">🔍</div>
+                    <h3 style="color: var(--accent-purple); margin-bottom: 0.5rem;">Web Search</h3>
+                    <p style="color: var(--text-secondary);">DuckDuckGo embedded browser. No new tabs needed</p>
+                </a>
+
+            </div>
+        </div>
+
+        <!-- More Tools -->
+        <div class="glass-panel">
+            <h2 style="text-align: center; margin-bottom: 2.5rem; color: var(--accent-pink);">
+                📱 All Tools
+            </h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                
+                <a href="calculator.html" class="glass-panel" style="
+                    text-decoration: none; color: inherit; 
+                    padding: 1.5rem; text-align: center;
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.transform='translateY(-3px)'" 
+                   onmouseout="this.style.background=''; this.style.transform='none'">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🧮</div>
+                    <h3>Scientific Calculator</h3>
+                    <p style="color: var(--text-secondary);">Math solver with history</p>
+                </a>
+
+                <a href="storage.html" class="glass-panel" style="
+                    text-decoration: none; color: inherit; 
+                    padding: 1.5rem; text-align: center;
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.transform='translateY(-3px)'" 
+                   onmouseout="this.style.background=''; this.style.transform='none'">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">💾</div>
+                    <h3>Virtual Drive</h3>
+                    <p style="color: var(--text-secondary);">Drag-drop file storage</p>
+                </a>
+
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="glass-panel">
+            <h2 style="text-align: center; margin-bottom: 2rem; color: var(--accent-blue);">
+                ✨ Why Student OS?
+            </h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; text-align: center;">
+                <div>
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
+                    <h3>Lightning Fast</h3>
+                    <p style="color: var(--text-secondary);">No servers, no APIs, pure browser magic</p>
                 </div>
-
-                <div class="glass-card">
-                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-                        <textarea id="newNoteInput" class="note-input" placeholder="Dump your thoughts here... Press Enter or click Add to save"></textarea>
-                        <button id="addNoteBtn" class="btn btn-primary">
-                            <i class="fas fa-plus"></i>
-                            Add Note
-                        </button>
-                    </div>
-
-                    <div id="notesGrid" class="notes-grid">
-                        <div class="empty-state">
-                            <i class="fas fa-sticky-note empty-state-icon"></i>
-                            <p>No notes yet. Start dumping your brain! 💭</p>
-                        </div>
-                    </div>
+                <div>
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+                    <h3>100% Private</h3>
+                    <p style="color: var(--text-secondary);">Your data stays on your device</p>
                 </div>
-            </section>
-
-            <!-- CHAT SECTION -->
-            <section id="chatSection" class="content-section">
-                <div class="content-header">
-                    <h1 class="page-title">🤖 AI Assistant</h1>
-                    <div style="font-size: 0.9rem; color: var(--text-secondary);">
-                        Ready to help with your studies ✨
-                    </div>
+                <div>
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📱</div>
+                    <h3>Mobile Ready</h3>
+                    <p style="color: var(--text-secondary);">Perfect on phone, tablet, desktop</p>
                 </div>
-
-                <div class="glass-card">
-                    <div class="chat-container">
-                        <div id="chatMessages" class="chat-messages">
-                            <div class="message assistant">
-                                👋 Hi! I'm your AI study assistant. Ask me anything about your notes, files, or study questions! 
-                                <br><br>
-                                <em>💡 Pro tip: Later I'll connect to your notes & files for context-aware answers</em>
-                            </div>
-                        </div>
-                        <div class="chat-input-container">
-                            <textarea 
-                                id="chatInput" 
-                                class="chat-input" 
-                                placeholder="Ask me anything..."
-                                rows="1"
-                            ></textarea>
-                            <button id="sendBtn" class="send-btn">
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
-                        </div>
-                    </div>
+                <div>
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">💰</div>
+                    <h3>Always Free</h3>
+                    <p style="color: var(--text-secondary);">No accounts, no subscriptions</p>
                 </div>
-            </section>
-
-            <!-- FILES SECTION -->
-            <section id="filesSection" class="content-section">
-                <div class="content-header">
-                    <h1 class="page-title">📁 File Storage</h1>
-                    <div>
-                        <label for="fileUpload" class="file-upload-label">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            Upload File
-                        </label>
-                        <input type="file" id="fileUpload" class="file-upload" multiple>
-                    </div>
-                </div>
-
-                <div class="glass-card">
-                    <div id="filesGrid" class="file-grid">
-                        <div class="empty-state">
-                            <i class="fas fa-folder-open empty-state-icon"></i>
-                            <p>No files uploaded yet. Drag & drop or click upload to get started!</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
+            </div>
+        </div>
     </div>
-
-    <script src="script.js"></script>
 </body>
 </html>
