@@ -2,74 +2,421 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Calculator - Student OS</title>
-    <link rel="stylesheet" href="css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scientific Calculator - Student OS</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <nav class="glass-panel" style="border-radius: 0 0 20px 20px; margin-bottom: 0;">
-        <div class="logo">Student OS</div>
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="pomodoro.html">Pomodoro</a>
-            <a href="calculator.html" class="active">Calc</a>
-            <a href="assistant.html">AI</a>
-            <a href="search.html">Search</a>
-            <a href="storage.html">Storage</a>
-        </div>
-    </nav>
-
-    <div class="container" style="display: flex; justify-content: center; align-items: center; height: 80vh;">
-        <div class="glass-panel" style="width: 320px;">
-            <input type="text" id="calc-display" class="calc-display" readonly>
-            <div class="calc-grid">
-                <button class="btn btn-secondary" onclick="appendCalc('C')">C</button>
-                <button class="btn btn-secondary" onclick="appendCalc('/')">/</button>
-                <button class="btn btn-secondary" onclick="appendCalc('*')">*</button>
-                <button class="btn btn-secondary" onclick="deleteLast()">⌫</button>
-                
-                <button class="btn btn-secondary" onclick="appendCalc('7')">7</button>
-                <button class="btn btn-secondary" onclick="appendCalc('8')">8</button>
-                <button class="btn btn-secondary" onclick="appendCalc('9')">9</button>
-                <button class="btn btn-secondary" onclick="appendCalc('-')">-</button>
-                
-                <button class="btn btn-secondary" onclick="appendCalc('4')">4</button>
-                <button class="btn btn-secondary" onclick="appendCalc('5')">5</button>
-                <button class="btn btn-secondary" onclick="appendCalc('6')">6</button>
-                <button class="btn btn-secondary" onclick="appendCalc('+')">+</button>
-                
-                <button class="btn btn-secondary" onclick="appendCalc('1')">1</button>
-                <button class="btn btn-secondary" onclick="appendCalc('2')">2</button>
-                <button class="btn btn-secondary" onclick="appendCalc('3')">3</button>
-                <button class="btn btn-primary" style="grid-row: span 2;" onclick="calculate()">=</button>
-                
-                <button class="btn btn-secondary" style="grid-column: span 2;" onclick="appendCalc('0')">0</button>
-                <button class="btn btn-secondary" onclick="appendCalc('.')">.</button>
+    <div class="app-layout">
+        <!-- 🧼 SIDEBAR (Same as main app) -->
+        <nav class="sidebar" id="sidebar">
+            <div class="logo">
+                <i class="fas fa-calculator logo-icon"></i>
+                <span>Student OS</span>
             </div>
-        </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">
+                        <i class="fas fa-home nav-icon"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link active">
+                        <i class="fas fa-calculator nav-icon"></i>
+                        <span>Calculator</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="index.html#notes" class="nav-link">
+                        <i class="fas fa-sticky-note nav-icon"></i>
+                        <span>Notes</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content" id="mainContent">
+            <button class="toggle-sidebar" id="toggleSidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- CALCULATOR SECTION -->
+            <section class="content-section active">
+                <div class="content-header">
+                    <h1 class="page-title">🧮 Scientific Calculator</h1>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                        Perfect for algebra, trigonometry & calculus
+                    </div>
+                </div>
+
+                <div class="glass-card" style="max-width: 400px; margin: 0 auto;">
+                    <!-- Display -->
+                    <div class="calc-display-container">
+                        <input type="text" id="calcDisplay" class="calc-display" readonly placeholder="0">
+                        <div class="calc-mode" id="calcMode">DEG</div>
+                    </div>
+
+                    <!-- Toggle Buttons -->
+                    <div class="calc-toggle">
+                        <button id="basicModeBtn" class="calc-mode-btn active">Basic</button>
+                        <button id="scientificModeBtn" class="calc-mode-btn">Scientific</button>
+                    </div>
+
+                    <!-- BASIC MODE -->
+                    <div id="basicGrid" class="calc-grid active">
+                        <button class="calc-btn clear" onclick="calcActions('clear')">
+                            <i class="fas fa-trash"></i> C
+                        </button>
+                        <button class="calc-btn operator" onclick="calcActions('/')">/</button>
+                        <button class="calc-btn operator" onclick="calcActions('*')">×</button>
+                        <button class="calc-btn backspace" onclick="calcActions('backspace')">
+                            <i class="fas fa-backspace"></i>
+                        </button>
+                        
+                        <button class="calc-btn num" onclick="calcActions('7')">7</button>
+                        <button class="calc-btn num" onclick="calcActions('8')">8</button>
+                        <button class="calc-btn num" onclick="calcActions('9')">9</button>
+                        <button class="calc-btn operator" onclick="calcActions('-")">-</button>
+                        
+                        <button class="calc-btn num" onclick="calcActions('4')">4</button>
+                        <button class="calc-btn num" onclick="calcActions('5')">5</button>
+                        <button class="calc-btn num" onclick="calcActions('6')">6</button>
+                        <button class="calc-btn operator" onclick="calcActions('+')">+</button>
+                        
+                        <button class="calc-btn num zero" onclick="calcActions('0')">0</button>
+                        <button class="calc-btn num" onclick="calcActions('.')">.</button>
+                        <button class="calc-btn equals" onclick="calcActions('equals')" rowspan="2">
+                            <i class="fas fa-equals"></i>
+                        </button>
+                        
+                        <button class="calc-btn num" onclick="calcActions('1')">1</button>
+                        <button class="calc-btn num" onclick="calcActions('2')">2</button>
+                        <button class="calc-btn num" onclick="calcActions('3')">3</button>
+                    </div>
+
+                    <!-- SCIENTIFIC MODE -->
+                    <div id="scientificGrid" class="calc-grid">
+                        <!-- First Row -->
+                        <button class="calc-btn clear" onclick="calcActions('clearAll')">CE</button>
+                        <button class="calc-btn function" onclick="calcActions('sin')">sin</button>
+                        <button class="calc-btn function" onclick="calcActions('cos')">cos</button>
+                        <button class="calc-btn operator" onclick="calcActions('/')">/</button>
+                        
+                        <!-- Second Row -->
+                        <button class="calc-btn backspace" onclick="calcActions('backspace')">
+                            <i class="fas fa-backspace"></i>
+                        </button>
+                        <button class="calc-btn function" onclick="calcActions('tan')">tan</button>
+                        <button class="calc-btn function" onclick="calcActions('log')">log</button>
+                        <button class="calc-btn operator" onclick="calcActions('*')">×</button>
+                        
+                        <!-- Third Row -->
+                        <button class="calc-btn" onclick="calcActions('(')">(</button>
+                        <button class="calc-btn function" onclick="calcActions('sqrt')">√</button>
+                        <button class="calc-btn constant" onclick="calcActions('pi')">π</button>
+                        <button class="calc-btn operator" onclick="calcActions('-')">-</button>
+                        
+                        <!-- Fourth Row -->
+                        <button class="calc-btn" onclick="calcActions(')')">)</button>
+                        <button class="calc-btn function" onclick="calcActions('pow')">xʸ</button>
+                        <button class="calc-btn constant" onclick="calcActions('e')">e</button>
+                        <button class="calc-btn operator" onclick="calcActions('+')">+</button>
+                        
+                        <!-- Numbers (same layout) -->
+                        <button class="calc-btn num" onclick="calcActions('7')">7</button>
+                        <button class="calc-btn num" onclick="calcActions('8')">8</button>
+                        <button class="calc-btn num" onclick="calcActions('9')">9</button>
+                        <button class="calc-btn equals" onclick="calcActions('equals')">
+                            <i class="fas fa-equals"></i>
+                        </button>
+                        
+                        <button class="calc-btn num zero" onclick="calcActions('0')">0</button>
+                        <button class="calc-btn num" onclick="calcActions('.')">.</button>
+                        <button class="calc-btn function" onclick="calcActions('ln')">ln</button>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
 
     <script>
-        const display = document.getElementById('calc-display');
+        class ScientificCalculator {
+            constructor() {
+                this.display = document.getElementById('calcDisplay');
+                this.currentInput = '0';
+                this.mode = 'basic'; // 'basic' or 'scientific'
+                this.isDegreeMode = true;
+                this.init();
+            }
 
-        function appendCalc(value) {
-            if (value === 'C') {
-                display.value = '';
-            } else if (value === '⌫') {
-                display.value = display.value.slice(0, -1);
-            } else {
-                display.value += value;
+            init() {
+                this.bindEvents();
+                this.updateDisplay();
+            }
+
+            bindEvents() {
+                // Mode toggle
+                document.getElementById('basicModeBtn').onclick = () => this.switchMode('basic');
+                document.getElementById('scientificModeBtn').onclick = () => this.switchMode('scientific');
+                
+                // Keyboard support
+                document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+            }
+
+            switchMode(newMode) {
+                this.mode = newMode;
+                document.getElementById('basicModeBtn').classList.toggle('active', newMode === 'basic');
+                document.getElementById('scientificModeBtn').classList.toggle('active', newMode === 'scientific');
+                document.getElementById('basicGrid').classList.toggle('active', newMode === 'basic');
+                document.getElementById('scientificGrid').classList.toggle('active', newMode === 'scientific');
+            }
+
+            calcActions(action) {
+                switch(action) {
+                    case 'clear': this.clear(); break;
+                    case 'clearAll': this.clearAll(); break;
+                    case 'backspace': this.backspace(); break;
+                    case 'equals': this.calculate(); break;
+                    case 'sin': this.mathFunction('sin'); break;
+                    case 'cos': this.mathFunction('cos'); break;
+                    case 'tan': this.mathFunction('tan'); break;
+                    case 'log': this.mathFunction('log10'); break;
+                    case 'ln': this.mathFunction('log'); break;
+                    case 'sqrt': this.mathFunction('sqrt'); break;
+                    case 'pow': this.mathFunction('pow'); break;
+                    case 'pi': this.appendConstant(Math.PI); break;
+                    case 'e': this.appendConstant(Math.E); break;
+                    default:
+                        if (['0','1','2','3','4','5','6','7','8','9','.','+','-','*','/','(',')'].includes(action)) {
+                            this.appendNumber(action);
+                        }
+                }
+            }
+
+            appendNumber(num) {
+                if (this.currentInput === '0' || this.currentInput === 'Error') {
+                    this.currentInput = num;
+                } else {
+                    this.currentInput += num;
+                }
+                this.updateDisplay();
+            }
+
+            appendConstant(value) {
+                this.currentInput += value.toFixed(10);
+                this.updateDisplay();
+            }
+
+            mathFunction(fn) {
+                try {
+                    let value = parseFloat(this.currentInput) || 0;
+                    
+                    switch(fn) {
+                        case 'sin': 
+                            value = this.isDegreeMode ? this.degToRad(value) : value;
+                            this.currentInput = Math.sin(value).toString();
+                            break;
+                        case 'cos': 
+                            value = this.isDegreeMode ? this.degToRad(value) : value;
+                            this.currentInput = Math.cos(value).toString();
+                            break;
+                        case 'tan': 
+                            value = this.isDegreeMode ? this.degToRad(value) : value;
+                            this.currentInput = Math.tan(value).toString();
+                            break;
+                        case 'log10': this.currentInput = Math.log10(value).toString(); break;
+                        case 'log': this.currentInput = Math.log(value).toString(); break;
+                        case 'sqrt': this.currentInput = Math.sqrt(value).toString(); break;
+                        case 'pow': 
+                            this.currentInput = `Math.pow(${value}, `;
+                            break;
+                    }
+                    this.updateDisplay();
+                } catch (e) {
+                    this.showError();
+                }
+            }
+
+            clear() {
+                this.currentInput = this.currentInput.slice(0, -1) || '0';
+                this.updateDisplay();
+            }
+
+            clearAll() {
+                this.currentInput = '0';
+                this.updateDisplay();
+            }
+
+            backspace() {
+                this.currentInput = this.currentInput.slice(0, -1) || '0';
+                this.updateDisplay();
+            }
+
+            calculate() {
+                try {
+                    // Replace × with * for eval
+                    let expression = this.currentInput.replace(/×/g, '*');
+                    let result = eval(expression);
+                    
+                    // Round to reasonable precision
+                    if (Math.abs(result) < 1e-10) result = 0;
+                    this.currentInput = result.toString();
+                    this.updateDisplay();
+                } catch (error) {
+                    this.showError();
+                }
+            }
+
+            showError() {
+                this.currentInput = 'Error';
+                this.updateDisplay();
+            }
+
+            updateDisplay() {
+                this.display.value = this.currentInput;
+            }
+
+            degToRad(deg) {
+                return deg * Math.PI / 180;
+            }
+
+            handleKeyboard(e) {
+                const key = e.key;
+                if (key >= '0' && key <= '9' || key === '.') {
+                    e.preventDefault();
+                    this.appendNumber(key);
+                } else if (['+', '-', '*', '/'].includes(key)) {
+                    e.preventDefault();
+                    this.appendNumber(key);
+                } else if (key === 'Enter' || key === '=') {
+                    e.preventDefault();
+                    this.calculate();
+                } else if (key === 'Escape') {
+                    this.clearAll();
+                } else if (key === 'Backspace') {
+                    e.preventDefault();
+                    this.backspace();
+                }
             }
         }
 
-        function calculate() {
-            try {
-                // Warning: eval is used here for simplicity in a static demo. 
-                // In a production app, use a math parser library.
-                display.value = eval(display.value);
-            } catch (error) {
-                display.value = 'Error';
-            }
-        }
+        // Initialize calculator when DOM loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new ScientificCalculator();
+        });
     </script>
+
+    <style>
+        /* Calculator Specific Styles */
+        .calc-display-container {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .calc-display {
+            width: 100%;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 0 1.5rem;
+            font-size: 2.5rem;
+            font-weight: 300;
+            text-align: right;
+            color: var(--text-primary);
+            letter-spacing: 1px;
+        }
+
+        .calc-mode {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            background: rgba(79, 159, 255, 0.2);
+            color: var(--accent-blue);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .calc-toggle {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .calc-mode-btn {
+            flex: 1;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .calc-mode-btn.active,
+        .calc-mode-btn:hover {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            display: none;
+        }
+
+        .calc-grid.active {
+            display: grid;
+        }
+
+        .calc-btn {
+            height: 60px;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.25rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .calc-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .calc-btn:active {
+            transform: scale(0.98);
+        }
+
+        .calc-btn.num { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
+        .calc-btn.operator { background: rgba(79, 159, 255, 0.2); color: var(--accent-blue); }
+        .calc-btn.function { background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); }
+        .calc-btn.constant { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .calc-btn.equals { 
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+            grid-row: span 2;
+        }
+        .calc-btn.clear { background: rgba(239, 68, 68, 0.2); color: var(--danger-red); }
+        .calc-btn.clear:hover { background: rgba(239, 68, 68, 0.3); }
+        .calc-btn.backspace { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .calc-btn.zero { grid-column: span 2; }
+
+        @media (max-width: 480px) {
+            .calc-btn { height: 55px; font-size: 1.1rem; }
+            .calc-display { font-size: 2rem; height: 70px; }
+        }
+    </style>
 </body>
 </html>
