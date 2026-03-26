@@ -3,48 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student OS - Dashboard</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Student Brain Dump - Notes, Files & AI Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <nav class="glass-panel" style="border-radius: 0 0 20px 20px; margin-bottom: 0;">
-        <div class="logo">Student OS</div>
-        <div class="nav-links">
-            <a href="index.html" class="active">Home</a>
-            <a href="pomodoro.html">Pomodoro</a>
-            <a href="calculator.html">Calc</a>
-            <a href="assistant.html">AI</a>
-            <a href="search.html">Search</a>
-            <a href="storage.html">Storage</a>
-        </div>
-    </nav>
+    <div class="app-layout">
+        <!-- 🧼 SIDEBAR -->
+        <nav class="sidebar" id="sidebar">
+            <div class="logo">
+                <i class="fas fa-brain logo-icon"></i>
+                <span>Student OS</span>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" data-section="notes">
+                        <i class="fas fa-sticky-note nav-icon"></i>
+                        <span>Notes</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="chat">
+                        <i class="fas fa-robot nav-icon"></i>
+                        <span>AI Chat</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-section="files">
+                        <i class="fas fa-folder nav-icon"></i>
+                        <span>Files</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
 
-    <div class="container">
-        <h1 style="margin-top: 2rem;">Welcome back, Student!</h1>
-        <p style="color: var(--text-muted);">Select a tool to begin your session.</p>
+        <!-- MAIN CONTENT -->
+        <main class="main-content" id="mainContent">
+            <!-- Mobile Toggle -->
+            <button class="toggle-sidebar" id="toggleSidebar">
+                <i class="fas fa-bars"></i>
+            </button>
 
-        <div class="dashboard-grid">
-            <a href="pomodoro.html" class="tool-card">
-                <div class="tool-icon">⏱️</div>
-                <div class="tool-title">Pomodoro Timer</div>
-            </a>
-            <a href="calculator.html" class="tool-card">
-                <div class="tool-icon">🧮</div>
-                <div class="tool-title">Calculator</div>
-            </a>
-            <a href="assistant.html" class="tool-card">
-                <div class="tool-icon">🤖</div>
-                <div class="tool-title">AI Assistant</div>
-            </a>
-            <a href="search.html" class="tool-card">
-                <div class="tool-icon">🔍</div>
-                <div class="tool-title">Web Search</div>
-            </a>
-            <a href="storage.html" class="tool-card">
-                <div class="tool-icon">💾</div>
-                <div class="tool-title">Storage</div>
-            </a>
-        </div>
+            <!-- NOTES SECTION (Default Active) -->
+            <section id="notesSection" class="content-section active">
+                <div class="content-header">
+                    <h1 class="page-title">📝 Brain Dump</h1>
+                    <div>
+                        <div class="search-container">
+                            <input type="text" id="notesSearch" class="search-input" placeholder="Search your notes...">
+                            <i class="fas fa-search search-icon"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                        <textarea id="newNoteInput" class="note-input" placeholder="Dump your thoughts here... Press Enter or click Add to save"></textarea>
+                        <button id="addNoteBtn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Add Note
+                        </button>
+                    </div>
+
+                    <div id="notesGrid" class="notes-grid">
+                        <div class="empty-state">
+                            <i class="fas fa-sticky-note empty-state-icon"></i>
+                            <p>No notes yet. Start dumping your brain! 💭</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CHAT SECTION -->
+            <section id="chatSection" class="content-section">
+                <div class="content-header">
+                    <h1 class="page-title">🤖 AI Assistant</h1>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                        Ready to help with your studies ✨
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div class="chat-container">
+                        <div id="chatMessages" class="chat-messages">
+                            <div class="message assistant">
+                                👋 Hi! I'm your AI study assistant. Ask me anything about your notes, files, or study questions! 
+                                <br><br>
+                                <em>💡 Pro tip: Later I'll connect to your notes & files for context-aware answers</em>
+                            </div>
+                        </div>
+                        <div class="chat-input-container">
+                            <textarea 
+                                id="chatInput" 
+                                class="chat-input" 
+                                placeholder="Ask me anything..."
+                                rows="1"
+                            ></textarea>
+                            <button id="sendBtn" class="send-btn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FILES SECTION -->
+            <section id="filesSection" class="content-section">
+                <div class="content-header">
+                    <h1 class="page-title">📁 File Storage</h1>
+                    <div>
+                        <label for="fileUpload" class="file-upload-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            Upload File
+                        </label>
+                        <input type="file" id="fileUpload" class="file-upload" multiple>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div id="filesGrid" class="file-grid">
+                        <div class="empty-state">
+                            <i class="fas fa-folder-open empty-state-icon"></i>
+                            <p>No files uploaded yet. Drag & drop or click upload to get started!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
