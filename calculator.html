@@ -29,6 +29,7 @@
         .calc-btn.clear:hover{background:rgba(239,68,68,.4)}
         .calc-btn.backspace{background:rgba(245,158,11,.3);color:#f59e0b}
         .calc-btn.zero{grid-column:span 2}
+        .calc-btn.neg{background:rgba(59,130,246,.3);color:#3b82f6}
         @media(max-width:768px){
             .container{padding:1rem;margin:1rem auto;max-width:95vw}
             .glass-panel{padding:2rem 1.5rem}
@@ -98,6 +99,7 @@
                 <button class="calc-btn equals" data-action="equals" style="grid-row: span 2; grid-column: span 2;"><i class="fas fa-equals"></i></button>
                 <button class="calc-btn num zero" data-value="0">0</button>
                 <button class="calc-btn num" data-value=".">.</button>
+                <button class="calc-btn neg" data-action="negate">±</button>
             </div>
 
             <!-- Scientific Mode -->
@@ -126,6 +128,7 @@
                 <button class="calc-btn num" data-value=".">.</button>
                 <button class="calc-btn operator" data-action="add">+</button>
                 <button class="calc-btn equals" data-action="equals"><i class="fas fa-equals"></i></button>
+                <button class="calc-btn neg" data-action="negate">±</button>
             </div>
         </div>
     </div>
@@ -134,9 +137,8 @@
         class Calculator {
             constructor() {
                 this.display = document.getElementById('calcDisplay');
-                this.current = '0';
-                this.previous = null;
-                this.operator = null;
+                this.expression = '0'; // Full expression string
+                this.resultMode = false;
                 this.init();
             }
 
@@ -178,109 +180,162 @@
             }
 
             append(value) {
-                // Prevent multiple decimals
-                if (value === '.' && this.current.includes('.')) return;
-                
-                if (this.current === '0' || this.current === 'Error') {
-                    this.current = value;
-                } else {
-                    this.current += value;
+                if (this.resultMode) {
+                    this.expression = this.resultMode.toString();
+                    this.resultMode = false;
                 }
+                
+                // Handle π
+                if (value === 'π') {
+                    value = Math.PI.toString();
+                }
+                
+                // Prevent multiple decimals in current number
+                const lastOpIndex = this.lastOperatorIndex();
+                const currentNum = lastOpIndex === -1 ? this.expression : this.expression.slice(lastOpIndex + 1);
+                if (value === '.' && currentNum.includes('.')) return;
+                
+                this.expression += value;
                 this.updateDisplay();
             }
 
             clearAll() {
-                this.current = '0';
-                this.previous = null;
-                this.operator = null;
+                this.expression = '0';
+                this.resultMode = false;
                 this.updateDisplay();
             }
 
             backspace() {
-                if (this.current === '0' || this.current === 'Error') return;
-                this.current = this.current.slice(0, -1) || '0';
+                if (this.expression === '0') return;
+                this.expression = this.expression.slice(0, -1) || '0';
+                this.resultMode = false;
                 this.updateDisplay();
             }
 
-            // Trigonometric functions (degrees)
-            sin() { this.unaryOperation(Math.sin, 'deg'); }
-            cos() { this.unaryOperation(Math.cos, 'deg'); }
-            tan() { this.unaryOperation(Math.tan, 'deg'); }
-
-            log() {
-                const num = parseFloat(this.current);
-                if (num <= 0) return this.error();
-                this.current = Math.log10(num).toFixed(10);
-                this.updateDisplay();
-            }
-
-            unaryOperation(mathFn, unit = 'rad') {
-                let num = parseFloat(this.current);
-                if (isNaN(num)) return this.error();
+            negate() {
+                const lastOpIndex = this.lastOperatorIndex();
+                const currentNum = lastOpIndex === -1 ? this.expression : this.expression.slice(lastOpIndex + 1);
                 
-                if (unit === 'deg') {
-                    num = num * Math.PI / 180;
+                if (currentNum === '0') return;
+                
+                if (currentNum.startsWith('-')) {
+                    this.expression = this.expression.slice(0, lastOpIndex + 1) + currentNum.slice(1);
+                } else {
+                    this.expression = this.expression.slice(0, lastOpIndex + 1) + '-' + currentNum;
+                }
+                this.updateDisplay();
+            }
+
+            // Safe eval with limited scope
+            safeEval(expression) {
+                // Replace × with * and ÷ with /
+                let safeExpr = expression.replace(/×/g, '*').replace(/÷/g, '/');
+                
+                // Only allow safe math operations
+                const allowed = /^[0-9+\-*/().πe\s]+$/;
+                if (!allowed.test(safeExpr)) {
+                    throw new Error('Invalid expression');
                 }
                 
-                this.current = mathFn(num).toFixed(10);
-                this.updateDisplay();
-            }
-
-            // Operators
-            add() { this.setOperator('+'); }
-            subtract() { this.setOperator('-'); }
-            multiply() { this.setOperator('*'); }
-            divide() { this.setOperator('/'); }
-
-            setOperator(op) {
-                this.previous = this.current;
-                this.operator = op;
-                this.current = '0';
+                try {
+                    // eslint-disable-next-line no-eval
+                    const result = eval(safeExpr);
+                    return isFinite(result) ? result : NaN;
+                } catch {
+                    return NaN;
+                }
             }
 
             equals() {
-                if (!this.previous || !this.operator) return;
-                
-                const prev = parseFloat(this.previous);
-                const curr = parseFloat(this.current);
-                
-                if (isNaN(prev) || isNaN(curr)) return this.error();
-                
-                let result;
-                switch (this.operator) {
-                    case '+': result = prev + curr; break;
-                    case '-': result = prev - curr; break;
-                    case '*': result = prev * curr; break;
-                    case '/': 
-                        if (curr === 0) return this.error('Cannot divide by zero');
-                        result = prev / curr; 
-                        break;
+                try {
+                    const result = this.safeEval(this.expression);
+                    if (isNaN(result)) {
+                        return this.error();
+                    }
+                    
+                    this.resultMode = result;
+                    this.expression = result.toString();
+                    this.updateDisplay();
+                } catch {
+                    this.error();
                 }
-                
-                this.current = Math.abs(result) < 1e-10 ? '0' : parseFloat(result.toPrecision(12)).toString();
-                this.previous = null;
-                this.operator = null;
-                this.updateDisplay();
             }
 
-            error(message = 'Error') {
-                this.current = 'Error';
+            // Trigonometric functions (degrees)
+            sin() { this.unaryOperation(Math.sin, true); }
+            cos() { this.unaryOperation(Math.cos, true); }
+            tan() { this.unaryOperation(Math.tan, true); }
+
+            log() {
+                try {
+                    const result = this.safeEval(this.expression);
+                    if (result <= 0) return this.error();
+                    this.resultMode = Math.log10(result);
+                    this.expression = this.resultMode.toString();
+                    this.updateDisplay();
+                } catch {
+                    this.error();
+                }
+            }
+
+            unaryOperation(mathFn, toDegrees = false) {
+                try {
+                    let num = this.safeEval(this.expression);
+                    if (isNaN(num)) return this.error();
+                    
+                    if (toDegrees) {
+                        num = num * Math.PI / 180;
+                    }
+                    
+                    this.resultMode = mathFn(num);
+                    this.expression = this.resultMode.toString();
+                    this.updateDisplay();
+                } catch {
+                    this.error();
+                }
+            }
+
+            lastOperatorIndex() {
+                const operators = ['+', '-', '*', '/', '×', '÷'];
+                for (let i = this.expression.length - 1; i >= 0; i--) {
+                    if (operators.includes(this.expression[i])) {
+                        return i;
+                    }
+                }
+                return -1;
+            }
+
+            error() {
+                this.expression = 'Error';
                 this.updateDisplay();
                 setTimeout(() => {
-                    if (this.current === 'Error') this.clearAll();
+                    if (this.expression === 'Error') this.clearAll();
                 }, 1500);
             }
 
             updateDisplay() {
-                let displayValue = this.current;
+                let displayValue = this.expression;
+                
                 if (displayValue === 'Error') {
                     this.display.style.color = '#ef4444';
                 } else {
                     this.display.style.color = 'var(--text-main)';
-                    if (displayValue.length > 14) {
-                        displayValue = parseFloat(displayValue).toExponential(8);
+                    
+                    // Clean up the display
+                    try {
+                        const num = parseFloat(displayValue);
+                        if (!isNaN(num)) {
+                            if (Math.abs(num) < 1e-10) {
+                                displayValue = '0';
+                            } else if (displayValue.length > 14) {
+                                displayValue = num.toPrecision(10);
+                            }
+                        }
+                    } catch {
+                        // Keep original if parsing fails
                     }
                 }
+                
                 this.display.value = displayValue;
             }
 
@@ -293,11 +348,15 @@
                 if (e.key === '.') {
                     this.append('.');
                 }
+                // Parentheses
+                if (e.key === '(' || e.key === ')') {
+                    this.append(e.key);
+                }
                 // Operators
-                if (['+', '-', '*', '/'].includes(e.key)) {
-                    if (e.key === '*') this.multiply();
-                    else if (e.key === '/') this.divide();
-                    else this[e.key]();
+                if (['+', '-', '*', '/', '×', '÷'].includes(e.key)) {
+                    if (e.key === '*') this.append('×');
+                    else if (e.key === '/') this.append('÷');
+                    else this.append(e.key);
                 }
                 // Equals
                 if (e.key === 'Enter' || e.key === '=') {
@@ -312,9 +371,9 @@
                 if (e.key === 'Backspace') {
                     this.backspace();
                 }
-                // Parentheses
-                if (e.key === '(' || e.key === ')') {
-                    this.append(e.key);
+                // Negate
+                if (e.key === 'n' || e.key === 'N') {
+                    this.negate();
                 }
             }
         }
