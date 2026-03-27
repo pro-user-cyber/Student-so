@@ -72,7 +72,7 @@
                 <p style="color:var(--text-muted);font-size:1rem;margin:0">Basic & Scientific</p>
             </div>
 
-            <input type="text" id="calcDisplay" class="calc-display" readonly placeholder="0" value="0">
+            <input type="text" id="calcDisplay" class="calc-display" readonly placeholder="0">
 
             <div class="calc-mode">
                 <button class="mode-btn active" data-mode="basic">Basic</button>
@@ -137,7 +137,7 @@
         class Calculator {
             constructor() {
                 this.display = document.getElementById('calcDisplay');
-                this.expression = '0'; // Full expression string
+                this.expression = '';
                 this.resultMode = false;
                 this.init();
             }
@@ -200,23 +200,24 @@
             }
 
             clearAll() {
-                this.expression = '0';
+                this.expression = '';
                 this.resultMode = false;
                 this.updateDisplay();
             }
 
             backspace() {
-                if (this.expression === '0') return;
-                this.expression = this.expression.slice(0, -1) || '0';
+                if (this.expression === '') return;
+                this.expression = this.expression.slice(0, -1);
                 this.resultMode = false;
                 this.updateDisplay();
             }
 
             negate() {
                 const lastOpIndex = this.lastOperatorIndex();
-                const currentNum = lastOpIndex === -1 ? this.expression : this.expression.slice(lastOpIndex + 1);
+                if (lastOpIndex === -1) return;
                 
-                if (currentNum === '0') return;
+                const currentNum = this.expression.slice(lastOpIndex + 1);
+                if (currentNum === '0' || currentNum === '') return;
                 
                 if (currentNum.startsWith('-')) {
                     this.expression = this.expression.slice(0, lastOpIndex + 1) + currentNum.slice(1);
@@ -229,7 +230,7 @@
             // Safe eval with limited scope
             safeEval(expression) {
                 // Replace × with * and ÷ with /
-                let safeExpr = expression.replace(/×/g, '*').replace(/÷/g, '/');
+                let safeExpr = expression.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
                 
                 // Only allow safe math operations
                 const allowed = /^[0-9+\-*/().πe\s]+$/;
@@ -314,7 +315,7 @@
             }
 
             updateDisplay() {
-                let displayValue = this.expression;
+                let displayValue = this.expression || '0';
                 
                 if (displayValue === 'Error') {
                     this.display.style.color = '#ef4444';
