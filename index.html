@@ -3,48 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student OS - Dashboard</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Student OS - Calculator</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root{--t:all .2s cubic-bezier(.4,0,.2,1);--s:0 10px 25px rgba(0,0,0,.3);--r:20px}
+        *{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+        body{font-family:'Nunito',sans-serif;background:var(--bg-gradient);color:var(--text-main);min-height:100vh;overflow-x:hidden}
+        .app{min-height:100vh;padding:1rem 0}
+        .top-nav{background:var(--glass-bg);backdrop-filter:blur(10px);padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--glass-border)}
+        .logo{font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,var(--accent-pink),var(--accent-blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:.5rem}
+        .back-btn{background:rgba(255,255,255,.1);border:1px solid var(--glass-border);color:var(--text-muted);padding:.75rem 1.5rem;border-radius:12px;text-decoration:none;font-weight:600;display:flex;align-items:center;gap:.5rem;transition:var(--t)}
+        .back-btn:hover{background:rgba(255,255,255,.2);color:var(--accent-blue);transform:translateY(-1px)}
+        .main{max-width:420px;margin:0 auto;padding:0 1rem}
+        .header{text-align:center;margin-bottom:2rem}
+        .title{font-size:clamp(1.8rem,5vw,2.5rem);font-weight:800;background:linear-gradient(135deg,var(--accent-pink),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0}
+        .glass{background:var(--glass-bg);backdrop-filter:blur(15px);border:1px solid var(--glass-border);border-radius:var(--r);padding:clamp(1.5rem,4vw,2.5rem);box-shadow:0 20px 40px rgba(0,0,0,.4)}
+        .display{position:relative;margin-bottom:1.5rem}
+        #calcDisplay{width:100%;height:clamp(70px,18vw,90px);background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:var(--r);padding:0 clamp(1rem,3vw,1.5rem);font-size:clamp(1.8rem,6vw,2.8rem);font-weight:300;text-align:right;color:var(--text-primary);outline:none;font-family:'Nunito',monospace}
+        .mode{position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:rgba(126,184,234,.2);color:var(--accent-blue);padding:.4rem .8rem;border-radius:20px;font-size:.8rem;font-weight:600;backdrop-filter:blur(10px)}
+        .toggle{display:flex;gap:.75rem;margin-bottom:1.5rem}
+        .mode-btn{flex:1;padding:.75rem;background:rgba(255,255,255,.08);border:1px solid var(--glass-border);color:var(--text-secondary);border-radius:12px;cursor:pointer;transition:var(--t);font-weight:600;font-size:.9rem}
+        .mode-btn.active,.mode-btn:hover{background:var(--accent-blue);color:#fff;border-color:var(--accent-blue);transform:translateY(-2px)}
+        .grid{display:none;grid-template-columns:repeat(4,1fr);gap:clamp(.8rem,2.5vw,1rem)}
+        .grid.active{display:grid}
+        .btn{height:clamp(55px,14vw,68px);border:none;border-radius:16px;font-size:clamp(1.1rem,4vw,1.3rem);font-weight:600;cursor:pointer;transition:var(--t);font-family:'Nunito',sans-serif;user-select:none;position:relative;overflow:hidden}
+        .btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);transition:left .5s}
+        .btn:active::before{left:100%}
+        .btn:hover:not(:active){transform:translateY(-3px);box-shadow:var(--s)}
+        .btn:active{transform:scale(.97)}
+        .num{background:rgba(255,255,255,.1);color:var(--text-primary)}
+        .op{background:rgba(126,184,234,.25);color:var(--accent-blue)}
+        .fn{background:rgba(161,140,209,.25);color:var(--accent-purple)}
+        .const{background:rgba(16,185,129,.25);color:#10b981}
+        .eq{background:linear-gradient(135deg,var(--accent-blue),var(--accent-purple));color:#fff;grid-row:span 2;font-size:clamp(1.3rem,4.5vw,1.5rem);font-weight:800}
+        .clear{background:rgba(239,68,68,.25);color:#ef4444}
+        .clear:hover:not(:active){background:rgba(239,68,68,.35)}
+        .bs{background:rgba(245,158,11,.25);color:#f59e0b}
+        .zero{grid-column:span 2}
+        @media(max-width:480px){.top-nav,.main{padding-left:1rem;padding-right:1rem}.glass{margin:0 .5rem;padding:1.5rem 1rem}}
+        @media(hover:none){.btn:hover:not(:active),.mode-btn:hover{transform:none}}
+        @media(max-height:500px)and(orientation:landscape){.main{margin:1rem auto;padding:0 .5rem}.glass{padding:1rem}}
+    </style>
 </head>
 <body>
-    <nav class="glass-panel" style="border-radius: 0 0 20px 20px; margin-bottom: 0;">
-        <div class="logo">Student OS</div>
-        <div class="nav-links">
-            <a href="index.html" class="active">Home</a>
-            <a href="pomodoro.html">Pomodoro</a>
-            <a href="calculator.html">Calc</a>
-            <a href="assistant.html">AI</a>
-            <a href="search.html">Search</a>
-            <a href="storage.html">Storage</a>
-        </div>
-    </nav>
-
-    <div class="container">
-        <h1 style="margin-top: 2rem;">Welcome back, Student!</h1>
-        <p style="color: var(--text-muted);">Select a tool to begin your session.</p>
-
-        <div class="dashboard-grid">
-            <a href="pomodoro.html" class="tool-card">
-                <div class="tool-icon">⏱️</div>
-                <div class="tool-title">Pomodoro Timer</div>
-            </a>
-            <a href="calculator.html" class="tool-card">
-                <div class="tool-icon">🧮</div>
-                <div class="tool-title">Calculator</div>
-            </a>
-            <a href="assistant.html" class="tool-card">
-                <div class="tool-icon">🤖</div>
-                <div class="tool-title">AI Assistant</div>
-            </a>
-            <a href="search.html" class="tool-card">
-                <div class="tool-icon">🔍</div>
-                <div class="tool-title">Web Search</div>
-            </a>
-            <a href="storage.html" class="tool-card">
-                <div class="tool-icon">💾</div>
-                <div class="tool-title">Storage</div>
-            </a>
-        </div>
+    <div class="app">
+        <nav class="top-nav">
+            <div class="logo"><i class="fas fa-calculator"></i>Student OS</div>
+            <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i>Back</a>
+        </nav>
+        <main class="main">
+            <div class="header"><h1 class="title">🧮 Scientific Calculator</h1></div>
+            <div class="glass">
+                <div class="display">
+                    <input type="text" id="calcDisplay" readonly placeholder="0" value="0">
+                    <div class="mode" id="calcMode">DEG</div>
+                </div>
+                <div class="toggle">
+                    <button id="basicModeBtn" class="mode-btn active">Basic</button>
+                    <button id="scientificModeBtn" class="mode-btn">Scientific</button>
+                </div>
+                <div id="basicGrid" class="grid active">
+                    <button class="btn clear" onclick="c.clear()">C</button><button class="btn bs" onclick="c.bs()">⌫</button><button class="btn op" onclick="c.a('/')">÷</button><button class="btn op" onclick="c.a('*')">×</button>
+                    <button class="btn num" onclick="c.a('7')">7</button><button class="btn num" onclick="c.a('8')">8</button><button class="btn num" onclick="c.a('9')">9</button><button class="btn op" onclick="c.a('-')">-</button>
+                    <button class="btn num" onclick="c.a('4')">4</button><button class="btn num" onclick="c.a('5')">5</button><button class="btn num" onclick="c.a('6')">6</button><button class="btn op" onclick="c.a('+')">+</button>
+                    <button class="btn num" onclick="c.a('1')">1</button><button class="btn num" onclick="c.a('2')">2</button><button class="btn num" onclick="c.a('3')">3</button><button class="btn eq" onclick="c.calc()"><i class="fas fa-equals"></i></button>
+                    <button class="btn num zero" onclick="c.a('0')">0</button><button class="btn num" onclick="c.a('.')">.</button>
+                </div>
+                <div id="scientificGrid" class="grid">
+                    <button class="btn clear" onclick="c.clear()">CE</button><button class="btn fn" onclick="c.sin()">sin</button><button class="btn fn" onclick="c.cos()">cos</button><button class="btn op" onclick="c.a('/')">÷</button>
+                    <button class="btn fn" onclick="c.tan()">tan</button><button class="btn fn" onclick="c.log()">log</button><button class="btn const" onclick="c.pi()">π</button><button class="btn op" onclick="c.a('*')">×</button>
+                    <button class="btn fn" onclick="c.sqrt()">√</button><button class="btn fn" onclick="c.pow()">x²</button><button class="btn" onclick="c.a('(')">(</button><button class="btn op" onclick="c.a('-')">-</button>
+                    <button class="btn num" onclick="c.a('7')">7</button><button class="btn num" onclick="c.a('8')">8</button><button class="btn num" onclick="c.a('9')">9</button><button class="btn op" onclick="c.a('+')">+</button>
+                    <button class="btn num" onclick="c.a('4')">4</button><button class="btn num" onclick="c.a('5')">5</button><button class="btn num" onclick="c.a('6')">6</button><button class="btn" onclick="c.a(')')">)</button>
+                    <button class="btn num" onclick="c.a('1')">1</button><button class="btn num" onclick="c.a('2')">2</button><button class="btn num" onclick="c.a('3')">3</button><button class="btn eq" onclick="c.calc()"><i class="fas fa-equals"></i></button>
+                    <button class="btn num zero" onclick="c.a('0')">0</button><button class="btn num" onclick="c.a('.')">.</button><button class="btn bs" onclick="c.bs()">⌫</button><button class="btn clear" onclick="c.clear()">C</button>
+                </div>
+            </div>
+        </main>
     </div>
+    <script>
+        const c={d:document.getElementById('calcDisplay'),i:'0',s:!1,m:1,init(){document.getElementById('basicModeBtn').onclick=()=>this.t('basic');document.getElementById('scientificModeBtn').onclick=()=>this.t('scientific');document.addEventListener('keydown',e=>this.k(e));this.u()},t(m){this.s=m==='scientific';document.getElementById('basicGrid').classList.toggle('active',!this.s);document.getElementById('scientificGrid').classList.toggle('active',this.s);document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b.id.includes(m)))},a(v){this.i=this.i==='0'||this.i==='Error'?v:this.i+v;this.u()},clear(){this.i='0';this.u()},bs(){this.i.length>1?this.i=this.i.slice(0,-1):this.i='0';this.u()},sin(){this.i=this.f(Math.sin(parseFloat(this.i)*this.m));this.u()},cos(){this.i=this.f(Math.cos(parseFloat(this.i)*this.m));this.u()},tan(){this.i=this.f(Math.tan(parseFloat(this.i)*this.m));this.u()},log(){let n=parseFloat(this.i);this.i=n<=0?'Error':this.f(Math.log10(n));this.u()},sqrt(){let n=parseFloat(this.i);this.i=n<0?'Error':this.f(Math.sqrt(n));this.u()},pow(){this.i=this.f(parseFloat(this.i)**2);this.u()},pi(){this.a('3.14159265359')},calc(){try{let e=this.i.replace(/×/g,'*').replace(/÷/g,'/');let r=Function('return '+e)();this.i=Math.abs(r)<1e-10?'0':this.f(r)}catch{this.i='Error'}this.u()},f(r){return r.toString().replace(/(\.\d*?)0+$/,'$1').replace(/\.$/,'')},u(){this.d.value=this.i},k(e){if(/[0-9.]/.test(e.key))this.a(e.key);else if(e.key==='/'||e.key==='*')this.a(e.key);else if(e.key==='+')this.a('+');else if(e.key==='-')this.a('-');else if(e.key==='Enter'||e.key==='=')this.calc();else if(e.key==='Escape'||e.key==='c'||e.key==='C')this.clear();else if(e.key==='Backspace')this.bs()}};c.init();
+    </script>
 </body>
 </html>
