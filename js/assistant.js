@@ -1,11 +1,4 @@
-console.log('🤖 AI ASSISTANT LOADED!');
-let aiAssistant = null;
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔥 Starting AI Assistant...');
-    aiAssistant = new AIBrain();
-    console.log('✅ AI BRAIN ACTIVE!');
-});
+console.log('🤖 AI ASSISTANT v2.0 LOADED! 🚀');
 
 class AIBrain {
     constructor() {
@@ -18,95 +11,66 @@ class AIBrain {
         this.init();
     }
 
-    // 🛡️ XSS Protection
-    escapeHTML(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
+    // 🔥 Initialize everything
     init() {
+        console.log('🔥 Initializing AI Brain...');
         this.getElements();
-        if (this.allElementsExist()) {
-            this.loadApiKey();
-            this.loadNotes();
-            this.setupEvents();
-            this.updateDisplay();
+        if (!this.allElementsExist()) {
+            console.error('❌ Missing DOM elements!');
+            return;
         }
+        this.loadSavedData();
+        this.setupEvents();
+        this.updateDisplay();
+        console.log('✅ AI Brain fully initialized!');
     }
 
+    // 🔍 Get all DOM elements
     getElements() {
-        this.notesInput = document.getElementById('notes-input');
-        this.questionInput = document.getElementById('question-input');
-        this.chatMessages = document.getElementById('chat-messages');
-        this.notesStatus = document.getElementById('notes-status');
-        this.notesInfo = document.getElementById('notes-info');
-        this.notesCount = document.getElementById('notes-count-display');
-        this.chatStatus = document.getElementById('chat-notes-status');
-        this.questionsCount = document.getElementById('questions-count-display');
-        this.saveBtn = document.getElementById('save-notes-btn');
-        this.clearBtn = document.getElementById('clear-notes-btn');
-        this.sendBtn = document.getElementById('send-btn');
-        this.apiKeyInput = document.getElementById('api-key-input');
-        this.saveApiKeyBtn = document.getElementById('save-api-key-btn');
-        this.apiStatus = document.getElementById('api-status');
-        this.filterTopicInput = document.getElementById('filter-topic-input');
-        this.analyzeBtn = document.getElementById('analyze-btn');
-        this.filterResults = document.getElementById('filter-results');
-        this.filterSentences = document.getElementById('filter-sentences');
-        this.filterCorrection = document.getElementById('filter-correction');
+        const ids = [
+            'notes-input', 'question-input', 'chat-messages', 'notes-status',
+            'notes-info', 'notes-count-display', 'chat-notes-status', 'questions-count-display',
+            'save-notes-btn', 'clear-notes-btn', 'send-btn', 'api-key-input',
+            'save-api-key-btn', 'api-status', 'filter-topic-input', 'analyze-btn',
+            'filter-results', 'filter-sentences', 'filter-correction'
+        ];
+        
+        ids.forEach(id => {
+            this[id.replace(/-/g, '_')] = document.getElementById(id);
+        });
     }
 
     allElementsExist() {
-        return this.notesInput && this.questionInput && this.chatMessages && 
-               this.notesStatus && this.saveBtn && this.sendBtn && 
-               this.apiKeyInput && this.apiStatus && this.filterTopicInput;
+        return !!this.notes_input && !!this.question_input && !!this.chat_messages &&
+               !!this.save_notes_btn && !!this.send_btn && !!this.api_key_input;
     }
 
-    async saveApiKey() {
-        this.apiKey = this.apiKeyInput.value.trim();
-        if (!this.apiKey) {
-            this.updateApiStatus('⚠️ Enter API key', 'error');
-            return false;
-        }
-        localStorage.setItem('groq_api_key', this.apiKey);
-        this.updateApiStatus('🔄 Validating...', 'info');
-        try {
-            const test = await this.apiRequest({
-                messages: [{role: 'user', content: 'test'}],
-                max_tokens: 1
-            });
-            if (!test.choices || !test.choices[0]) throw new Error('Invalid response format');
-            this.updateApiStatus('✅ Key saved', 'success');
-            return true;
-        } catch {
-            localStorage.removeItem('groq_api_key');
-            this.updateApiStatus('❌ Invalid key', 'error');
-            return false;
-        }
-    }
-
-    loadApiKey() {
+    // 💾 Load saved data
+    loadSavedData() {
+        // Load API key
         this.apiKey = localStorage.getItem('groq_api_key') || '';
-        this.apiKeyInput.value = this.apiKey;
-        this.updateApiStatus(this.apiKey ? '✅ Key saved' : '🔑 No key', this.apiKey ? 'success' : 'info');
-    }
+        if (this.api_key_input) this.api_key_input.value = this.apiKey;
+        this.updateApiStatus(this.apiKey ? '✅ Valid key loaded' : '🔑 Enter API key');
 
-    updateApiStatus(message, type = 'info') {
-        if (this.apiStatus) {
-            this.apiStatus.textContent = message;
-            this.apiStatus.style.color = type === 'success' ? '#10b981' : 
-                                       type === 'error' ? '#ef4444' : 'var(--accent-blue)';
+        // Load notes
+        const savedNotes = localStorage.getItem('ai_notes');
+        if (savedNotes) {
+            this.notes = savedNotes;
+            if (this.notes_input) this.notes_input.value = savedNotes;
         }
     }
 
-    hasValidApiKey() {
-        return !!this.apiKey;
-    }
+    // 🔑 API Key Management (with TEST message!)
+    async testApiKey() {
+        if (!this.apiKey.trim()) {
+            this.updateApiStatus('⚠️ No API key entered', 'error');
+            return false;
+        }
 
-    async apiRequest(body) {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
+        this.updateApiStatus('🧪 Testing API key...', 'info');
+        this.api_key_input.disabled = true;
+        this.save_api_key_btn.disabled = true;
+
         try {
             const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
@@ -116,254 +80,336 @@ class AIBrain {
                 },
                 body: JSON.stringify({
                     model: 'llama3-8b-8192',
-                    ...body
+                    messages: [{ role: 'user', content: 'Say "API works!"' }],
+                    max_tokens: 10
+                })
+            });
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const data = await response.json();
+            if (!data.choices?.[0]?.message?.content?.includes('API works')) {
+                throw new Error('Invalid response');
+            }
+
+            // ✅ SUCCESS - Save and show confirmation message!
+            localStorage.setItem('groq_api_key', this.apiKey);
+            this.updateApiStatus('✅ API Key VALIDATED! Ready to use.', 'success');
+            
+            // 🎉 Add success message to chat
+            this.addMessage('assistant', '🎉 <strong>API Key Verified!</strong><br>✅ Chat AI & Filter AI are now active!<br>🚀 Ask away!');
+            
+            return true;
+        } catch (error) {
+            console.error('API Test failed:', error);
+            localStorage.removeItem('groq_api_key');
+            this.updateApiStatus('❌ Invalid API key. Get free key: groq.com', 'error');
+            return false;
+        } finally {
+            this.api_key_input.disabled = false;
+            this.save_api_key_btn.disabled = false;
+            this.save_api_key_btn.textContent = '✅ Test & Save';
+        }
+    }
+
+    updateApiStatus(message, type = 'info') {
+        if (!this.api_status) return;
+        
+        this.api_status.textContent = message;
+        this.api_status.className = `api-status ${type}`;
+        
+        // Color overrides
+        const colors = {
+            success: '#10b981',
+            error: '#ef4444', 
+            info: 'var(--accent-blue)'
+        };
+        this.api_status.style.color = colors[type] || colors.info;
+    }
+
+    // 🧠 Core API Request (Production Ready)
+    async apiRequest(messages, options = {}) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+        try {
+            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'llama3-8b-8192',
+                    messages,
+                    temperature: options.temperature || 0.1,
+                    max_tokens: options.max_tokens || 1000,
+                    ...options
                 }),
                 signal: controller.signal
             });
-            clearTimeout(timeout);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API Error ${response.status}: ${errorText.slice(0, 100)}`);
+            }
+
             const data = await response.json();
-            if (!data.choices?.[0]) throw new Error('Invalid response format');
-            return data;
+            if (!data.choices?.[0]?.message?.content) {
+                throw new Error('Invalid API response format');
+            }
+
+            return data.choices[0].message.content.trim();
         } catch (error) {
-            clearTimeout(timeout);
+            if (error.name === 'AbortError') {
+                throw new Error('Request timeout - try again');
+            }
             throw error;
         }
     }
 
-    // 🆕 NEW CHATBOT AI PROMPT (STRICT NOTES-ONLY)
-    async handleChatAI(message) {
-        const recentNotes = this.notes.slice(-3000);
-        const response = await this.apiRequest({
-            messages: [
-                {
-                    role: 'system',
-                    content: `You are a strict academic study assistant.
+    // 💬 CHAT AI (Strict Notes-Only)
+    async chatAI(message) {
+        if (!this.hasValidApiKey()) {
+            return '🔑 <strong>API Key Required</strong><br>Get free key at <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>';
+        }
 
-RULES:
-- ONLY use the provided notes as your knowledge source.
-- If the answer is NOT explicitly in the notes, say: "Not found in provided notes."
-- Do NOT use outside knowledge.
-- Do NOT guess or infer beyond the notes.
-- Keep answers concise, clear, and academic.
-- Quote or reference the notes when possible.
+        const recentNotes = this.notes.slice(-4000);
+        const prompt = `You are a strict academic study assistant using ONLY these notes:
 
+${'='.repeat(50)}
 NOTES:
-"""${recentNotes}"""` 
-                },
-                { role: 'user', content: message }
-            ],
-            temperature: 0.1,
-            max_tokens: 500
-        });
-        return this.escapeHTML(response.choices[0].message.content);
-    }
+"""${recentNotes}"""
+${'='.repeat(50)}
 
-    // 🆕 NEW FILTER AI PROMPT (NOTE ANALYZER)
-    async handleFilterAI(topic, notes) {
-        if (!this.hasValidApiKey()) return this.filterFallback(topic, notes);
+RULES (MANDATORY):
+1. Answer using ONLY content from notes above
+2. If not explicitly in notes: "❌ Not found in notes"
+3. NO outside knowledge, NO guessing
+4. Quote exact text when possible
+5. Be concise & academic
+
+QUESTION: ${message}`;
+
         try {
-            const response = await this.apiRequest({
-                messages: [{
-                    role: 'user',
-                    content: `You are an AI note analyzer.
+            const response = await this.apiRequest([
+                { role: 'system', content: prompt },
+                { role: 'user', content: message }
+            ], { max_tokens: 800, temperature: 0.1 });
 
-You MUST return ONLY valid JSON. No extra text.
-
-TASK:
-- Break the notes into individual sentences.
-- For each sentence, classify it as:
-  - "relevant" → directly related to the topic
-  - "irrelevant" → not related
-
-- Then give a short academic correction/improvement of the notes.
-
-STRICT OUTPUT FORMAT:
-{
-  "analysis": [
-    {"sentence": "exact sentence", "status": "relevant|irrelevant"}
-  ],
-  "correction": "brief academic feedback to improve notes"
-}
-
-RULES:
-- Do NOT modify sentences.
-- Do NOT summarize sentences.
-- Do NOT include explanations outside JSON.
-- Be strict in relevance (no stretching connections).
-
-TOPIC:
-"${topic}"
-
-NOTES:
-"""${notes.substring(0, 8000)}"""`
-                }],
-                temperature: 0,
-                max_tokens: 3000
-            });
-
-            const raw = response.choices[0].message.content.trim();
-            const jsonStart = raw.indexOf('{');
-            const jsonEnd = raw.lastIndexOf('}') + 1;
-            if (jsonStart === -1 || jsonEnd <= jsonStart) throw new Error('No JSON');
-            const cleanJson = raw.substring(jsonStart, jsonEnd);
-            const parsed = JSON.parse(cleanJson);
-            if (!parsed.analysis || !Array.isArray(parsed.analysis)) throw new Error('Invalid format');
-
-            // 🛡️ XSS safe
-            parsed.analysis = parsed.analysis.map(item => ({
-                ...item,
-                sentence: this.escapeHTML(item.sentence)
-            }));
-            return parsed;
+            return this.escapeHTML(response);
         } catch (error) {
-            console.error('🧨 Filter AI failed:', error);
-            const fallback = this.filterFallback(topic, notes);
-            fallback.correction += ' <span style="color:#fbbf24;font-weight:bold;">(⚠️ AI failed → using smart fallback)</span>';
-            return fallback;
+            console.error('Chat AI error:', error);
+            return `⚠️ AI Error: ${error.message}<br>Try again or check your API key.`;
         }
     }
 
+    // 🔍 FILTER AI (Note Analyzer)
+    async filterAI(topic, notes) {
+        if (!this.hasValidApiKey()) {
+            return this.filterFallback(topic, notes);
+        }
+
+        const prompt = `ANALYZE THESE NOTES FOR TOPIC: "${topic}"
+
+Return ONLY valid JSON - NO other text!
+
+FORMAT:
+{
+  "analysis": [
+    {"sentence": "exact sentence text", "status": "relevant|irrelevant", "reason": "brief reason"}
+  ],
+  "correction": "1-2 sentence academic feedback",
+  "summary": "1 sentence topic summary"
+}
+
+NOTES (max 6000 chars):
+"""${notes.substring(0, 6000)}"""
+
+RULES:
+- Extract REAL sentences (don't modify)
+- "relevant" = directly mentions topic/keywords
+- "irrelevant" = no clear connection
+- Max 20 sentences
+- JSON must be parseable`;
+
+        try {
+            const response = await this.apiRequest([{ role: 'user', content: prompt }], {
+                max_tokens: 2000,
+                temperature: 0.0
+            });
+
+            // Parse JSON safely
+            const jsonMatch = response.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) throw new Error('No valid JSON');
+
+            const result = JSON.parse(jsonMatch[0]);
+            if (!result.analysis?.length) throw new Error('Invalid analysis format');
+
+            // Sanitize
+            result.analysis = result.analysis.slice(0, 25).map(item => ({
+                sentence: this.escapeHTML(item.sentence || ''),
+                status: item.status || 'irrelevant',
+                reason: this.escapeHTML(item.reason || '')
+            }));
+
+            return result;
+        } catch (error) {
+            console.error('Filter AI error:', error);
+            return this.filterFallback(topic, notes);
+        }
+    }
+
+    // 🔧 Smart Fallbacks
     filterFallback(topic, notes) {
-        const sentences = notes.split(/[\n][\s]*|[.!?][\s]*|;[.\s]*|(?<!e\.g\.|i\.e\.|etc\.|Dr\.|Mr\.|Mrs\.)[.][\s]*|[\n]{2,}/)
+        const sentences = notes
+            .split(/[.?!;]\s*|\n\s*\n/)
             .map(s => s.trim())
-            .filter(s => s.length > 10);
-        const topicWords = topic.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+            .filter(s => s.length > 8)
+            .slice(0, 25);
+
+        const topicWords = topic.toLowerCase().split(/\W+/).filter(w => w.length > 2);
+
         return {
-            analysis: sentences.map(s => ({
-                sentence: this.escapeHTML(s),
-                status: topicWords.some(w => s.toLowerCase().includes(w)) ? 'relevant' : 'irrelevant'
-            })),
-            correction: '🔑 API key needed for full AI analysis. Using enhanced keyword matching.'
+            analysis: sentences.map(sentence => {
+                const score = topicWords.filter(word => 
+                    sentence.toLowerCase().includes(word)
+                ).length;
+                
+                return {
+                    sentence: this.escapeHTML(sentence),
+                    status: score > 0 ? 'relevant' : 'irrelevant',
+                    reason: score > 0 ? 'Contains topic keywords' : 'No topic match'
+                };
+            }),
+            correction: '💡 <strong>Upgrade to AI Analysis:</strong> Enter valid Groq API key for smart relevance scoring.',
+            summary: `Keyword match on "${topicWords.join(', ')}"`
         };
     }
 
-    async askQuestion() {
-        if (this.isChatLoading) return;
-        this.isChatLoading = true;
-        try {
-            const question = this.questionInput.value.trim();
-            if (!question) return this.showStatus('⚠️ Enter a question!', 'error');
-            if (!this.notes) {
-                this.addMessage('user', this.escapeHTML(question));
-                this.addMessage('assistant', '❌ No notes saved! 1️⃣ Type notes 2️⃣ 💾 Save 3️⃣ Ask');
-                this.questionInput.value = '';
-                return;
-            }
-            this.addMessage('user', this.escapeHTML(question));
-            this.questionInput.value = '';
-            this.questionsAsked++;
-            const thinkingId = this.addMessage('assistant', '🧠 AI thinking...');
-            let answer;
-            if (this.hasValidApiKey()) {
-                answer = await this.handleChatAI(question);
-            } else {
-                answer = `🔑 API Key needed for AI chat.<br>
-Get free at <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent-blue)">console.groq.com/keys</a><br><br>
-${this.findAnswerFallback(question)}`;
-            }
-            this.removeMessage(thinkingId);
-            this.addMessage('assistant', answer);
-            this.updateDisplay();
-        } finally {
-            this.isChatLoading = false;
-        }
-    }
-
-    async analyzeNotes() {
-        if (this.isFilterLoading) return;
-        this.isFilterLoading = true;
-        try {
-            const topic = this.filterTopicInput.value.trim();
-            if (!topic) return this.showStatus('⚠️ Enter topic!', 'error');
-            if (!this.notes) return this.showStatus('⚠️ Save notes first!', 'error');
-            this.analyzeBtn.textContent = '⏳ Analyzing...';
-            this.analyzeBtn.disabled = true;
-            const result = await this.handleFilterAI(topic, this.notes);
-            this.renderFilterResults(result);
-        } finally {
-            this.analyzeBtn.disabled = false;
-            this.isFilterLoading = false;
-            this.analyzeBtn.textContent = '🔍 Analyze Notes';
-        }
-    }
-
-    renderFilterResults(result) {
-        this.filterSentences.innerHTML = result.analysis.map(item => 
-            `<div style="margin-bottom:0.75rem;padding:0.75rem;border-radius:8px; background: ${item.status === 'relevant' ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.3)'}; border-left:4px solid ${item.status === 'relevant' ? '#10b981' : '#ef4444'};">
-                <strong>${item.status === 'relevant' ? '✅ Relevant' : '❌ Irrelevant'}</strong><br>
-                "${item.sentence}"
-            </div>`
-        ).join('');
-        this.filterCorrection.innerHTML = `💡 AI Feedback: ${result.correction}`;
-        this.filterResults.style.display = 'block';
-        this.filterResults.scrollIntoView({behavior: 'smooth'});
-    }
-
-    setupEvents() {
-        this.questionInput.addEventListener('keypress', (e) => e.key === 'Enter' && this.askQuestion());
-        this.sendBtn.addEventListener('click', () => this.askQuestion());
-        this.saveBtn.addEventListener('click', () => this.saveNotes());
-        this.clearBtn.addEventListener('click', () => this.clearNotes());
-        this.saveApiKeyBtn.addEventListener('click', () => this.saveApiKey());
-        this.apiKeyInput.addEventListener('keypress', (e) => e.key === 'Enter' && this.saveApiKey());
-        this.analyzeBtn.addEventListener('click', () => this.analyzeNotes());
-        this.notesInput.addEventListener('input', () => setTimeout(() => this.updateDisplay(), 100));
-    }
-
+    // 📝 Notes Management
     saveNotes() {
-        this.notes = this.notesInput.value.trim();
-        if (!this.notes) return this.showStatus('⚠️ No notes!', 'error');
+        this.notes = this.notes_input.value.trim();
+        if (!this.notes) {
+            this.showStatus('⚠️ No notes to save!', 'error');
+            return;
+        }
         localStorage.setItem('ai_notes', this.notes);
-        this.showStatus(`✅ SAVED! ${this.getStats().words} words`, 'success');
+        this.showStatus(`✅ Saved! ${this.getWordCount(this.notes)} words`, 'success');
         this.updateDisplay();
     }
 
     clearNotes() {
-        if (confirm('🗑️ Delete all notes?')) {
-            this.notesInput.value = this.notes = '';
-            localStorage.removeItem('ai_notes');
-            if (this.filterResults) this.filterResults.style.display = 'none';
-            this.showStatus('🗑️ Cleared!', 'info');
+        if (!confirm('🗑️ Delete ALL notes?')) return;
+        this.notes = '';
+        this.notes_input.value = '';
+        localStorage.removeItem('ai_notes');
+        this.chatHistory = [];
+        this.renderChat();
+        if (this.filter_results) this.filter_results.style.display = 'none';
+        this.showStatus('🗑️ Notes cleared!', 'info');
+        this.updateDisplay();
+    }
+
+    // 💬 Chat Functions
+    async askQuestion() {
+        if (this.isChatLoading) return;
+        
+        const question = this.question_input.value.trim();
+        if (!question) return this.showStatus('⚠️ Enter a question!', 'error');
+        if (!this.notes) return this.showStatus('⚠️ Save notes first!', 'error');
+
+        this.isChatLoading = true;
+        this.question_input.disabled = true;
+        this.send_btn.disabled = true;
+        this.send_btn.textContent = '⏳ AI Thinking...';
+
+        try {
+            // Add user message
+            this.addMessage('user', this.escapeHTML(question));
+            this.question_input.value = '';
+
+            // Show thinking
+            const thinkingId = this.addMessage('assistant', '🧠 Thinking... <em>(using your notes)</em>');
+
+            // Get AI response
+            const answer = await this.chatAI(question);
+            this.removeMessage(thinkingId);
+            this.addMessage('assistant', answer);
+
+            this.questionsAsked++;
             this.updateDisplay();
+        } catch (error) {
+            this.addMessage('assistant', `⚠️ Error: ${error.message}`);
+        } finally {
+            this.isChatLoading = false;
+            this.question_input.disabled = false;
+            this.send_btn.disabled = false;
+            this.send_btn.textContent = 'Send 🚀';
         }
     }
 
-    loadNotes() {
-        const saved = localStorage.getItem('ai_notes');
-        if (saved) {
-            this.notes = saved;
-            this.notesInput.value = saved;
-            this.updateDisplay();
+    // 🔍 Analyze Notes
+    async analyzeNotes() {
+        if (this.isFilterLoading) return;
+        
+        const topic = this.filter_topic_input.value.trim();
+        if (!topic) return this.showStatus('⚠️ Enter analysis topic!', 'error');
+        if (!this.notes) return this.showStatus('⚠️ No notes saved!', 'error');
+
+        this.isFilterLoading = true;
+        this.analyze_btn.disabled = true;
+        this.analyze_btn.textContent = '⏳ Analyzing...';
+
+        try {
+            const result = await this.filterAI(topic, this.notes);
+            this.renderFilterResults(result);
+        } catch (error) {
+            this.showStatus(`⚠️ Analysis failed: ${error.message}`, 'error');
+        } finally {
+            this.isFilterLoading = false;
+            this.analyze_btn.disabled = false;
+            this.analyze_btn.textContent = '🔍 Analyze Notes';
         }
     }
 
-    findAnswerFallback(question) {
-        const sentences = this.notes.split(/[\n.!?]+/).map(s => s.trim()).filter(s => s.length > 15);
-        const qWords = question.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 2);
-        let bestMatch = '', bestScore = 0;
-        sentences.forEach(s => {
-            let score = 0;
-            qWords.forEach(w => s.toLowerCase().includes(w) && (score += w.length / 10));
-            if (score > bestScore && score > 0.8) {
-                bestScore = score;
-                bestMatch = s;
-            }
-        });
-        return bestMatch ? 
-            `📖 Found: "${this.escapeHTML(this.capitalize(bestMatch))}" (Score: ${Math.round(bestScore*100)}%)` : 
-            '🤔 No match. Use exact note words.';
+    renderFilterResults(result) {
+        const html = result.analysis.map(item => `
+            <div style="margin-bottom: 1rem; padding: 1rem; border-radius: 12px; 
+                background: ${item.status === 'relevant' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'};
+                border-left: 4px solid ${item.status === 'relevant' ? '#10b981' : '#ef4444'};">
+                <div style="font-weight: 700; margin-bottom: 0.5rem;">
+                    ${item.status === 'relevant' ? '✅ RELEVANT' : '❌ IRRELEVANT'}
+                </div>
+                <div style="font-style: italic; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">
+                    ${item.reason || ''}
+                </div>
+                <div>"${item.sentence}"</div>
+            </div>
+        `).join('');
+
+        this.filter_sentences.innerHTML = html;
+        this.filter_correction.innerHTML = `<strong>💡 Feedback:</strong> ${result.correction}`;
+        
+        if (result.summary) {
+            this.filter_correction.innerHTML += `<br><br><strong>📋 Summary:</strong> ${result.summary}`;
+        }
+
+        this.filter_results.style.display = 'block';
+        this.filter_results.scrollIntoView({ behavior: 'smooth' });
     }
 
+    // 🎨 UI Helpers
     addMessage(type, text) {
         this.chatHistory.push({
             id: Date.now(),
-            type,
+            type: type === 'user' ? 'user' : 'assistant',
             text,
-            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         });
         this.renderChat();
-        return this.chatHistory[this.chatHistory.length - 1].id;
     }
 
     removeMessage(id) {
@@ -372,41 +418,96 @@ ${this.findAnswerFallback(question)}`;
     }
 
     renderChat() {
-        this.chatHistory = this.chatHistory.slice(-12);
-        this.chatMessages.innerHTML = this.chatHistory.map(msg => 
-            `<div class="message ${msg.type}">
-                <time>${msg.time}</time>
-                ${msg.text}
-            </div>`
-        ).join('');
-        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        // Keep last 15 messages
+        this.chatHistory = this.chatHistory.slice(-15);
+        
+        this.chat_messages.innerHTML = this.chatHistory.map(msg => `
+            <div class="message ${msg.type}">
+                <small style="opacity: 0.7; display: block; margin-bottom: 0.25rem;">
+                    ${msg.time}
+                </small>
+                <div>${msg.text}</div>
+            </div>
+        `).join('');
+
+        this.chat_messages.scrollTop = this.chat_messages.scrollHeight;
+    }
+
+    getWordCount(text) {
+        return text.trim().split(/\s+/).filter(w => w.length).length;
     }
 
     updateDisplay() {
-        const stats = this.getStats();
-        this.notesInfo.textContent = stats.words > 0 ? 'Saved ✓' : 'Not saved';
-        this.notesCount.textContent = `${stats.words} words`;
-        this.chatStatus.textContent = stats.words > 0 ? `${stats.words} words loaded` : 'No notes';
-        this.questionsCount.textContent = `${this.questionsAsked} asked`;
-    }
-
-    getStats() {
-        return {
-            words: this.notesInput.value.trim().split(/\s+/).filter(w => w.length).length
-        };
+        const wordCount = this.getWordCount(this.notes_input?.value || '');
+        
+        if (this.notes_info) this.notes_info.textContent = wordCount > 0 ? '✅ Saved' : 'Not saved';
+        if (this.notes_count_display) this.notes_count_display.textContent = `${wordCount} words`;
+        if (this.chat_notes_status) this.chat_notes_status.textContent = wordCount > 0 ? `${wordCount} words ready` : 'Load notes first';
+        if (this.questions_count_display) this.questions_count_display.textContent = `${this.questionsAsked}`;
     }
 
     showStatus(message, type = 'info') {
-        this.notesStatus.textContent = message;
-        this.notesStatus.style.color = type === 'success' ? '#10b981' : 
-                                     type === 'error' ? '#ef4444' : 'var(--accent-blue)';
-        this.notesStatus.style.display = 'block';
-        setTimeout(() => this.notesStatus.style.display = 'none', 2500);
+        if (!this.notes_status) return;
+        
+        this.notes_status.textContent = message;
+        this.notes_status.className = `status ${type}`;
+        this.notes_status.style.display = 'block';
+        
+        setTimeout(() => {
+            this.notes_status.style.display = 'none';
+        }, 3000);
     }
 
-    capitalize(str) {
-        return str.charAt(0).toUpperCase() + str.slice(1);
+    // ⌨️ Event Listeners
+    setupEvents() {
+        // Notes
+        this.notes_input?.addEventListener('input', debounce(() => this.updateDisplay(), 300));
+        this.save_notes_btn?.addEventListener('click', () => this.saveNotes());
+        this.clear_notes_btn?.addEventListener('click', () => this.clearNotes());
+
+        // Chat
+        this.question_input?.addEventListener('keypress', e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.askQuestion();
+            }
+        });
+        this.send_btn?.addEventListener('click', () => this.askQuestion());
+
+        // API
+        this.api_key_input?.addEventListener('keypress', e => {
+            if (e.key === 'Enter') this.testApiKey();
+        });
+        this.save_api_key_btn?.addEventListener('click', () => this.testApiKey());
+
+        // Filter
+        this.filter_topic_input?.addEventListener('keypress', e => {
+            if (e.key === 'Enter') this.analyzeNotes();
+        });
+        this.analyze_btn?.addEventListener('click', () => this.analyzeNotes());
     }
 }
 
-console.log('🎉 XSS-PROOF POLISHED AI READY!');
+// 🛠️ Utility Functions
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// 🚀 Initialize when DOM ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.aiAssistant = new AIBrain();
+        console.log('🎉 AI ASSISTANT FULLY ACTIVE!');
+    });
+} else {
+    window.aiAssistant = new AIBrain();
+    console.log('🎉 AI ASSISTANT FULLY ACTIVE!');
+}
