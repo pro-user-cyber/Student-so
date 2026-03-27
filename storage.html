@@ -6,97 +6,125 @@
     <title>💾 File Storage - Student OS</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* File Storage Specific Styles - Fully Responsive */
+        .storage-container{display:flex;flex-direction:column;height:calc(100vh - 120px);gap:1.5rem;}
+        .main-layout{display:flex;flex:1;min-height:0;gap:1.5rem;}
+        .sidebar{width:280px;flex-shrink:0;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--card-radius);padding:1.5rem;overflow:auto;}
+        .main-content{flex:1;display:flex;flex-direction:column;}
+        .toolbar{display:flex;gap:1rem;padding:1rem 0;justify-content:space-between;align-items:center;flex-wrap:wrap;}
+        .toolbar-left{display:flex;gap:0.75rem;flex-wrap:wrap;}
+        .toolbar-right{display:flex;gap:0.75rem;}
+        .file-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;padding:1rem 0;overflow:auto;flex:1;}
+        .file-item{padding:1rem;cursor:pointer;border-radius:12px;transition:all 0.2s;border:1px solid transparent;}
+        .file-item:hover{background:rgba(255,255,255,0.05);border-color:var(--glass-border);transform:translateY(-2px);}
+        .file-item.directory{color:var(--accent-blue);}
+        .file-item i{font-size:2rem;margin-bottom:0.5rem;display:block;}
+        .editor-container{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--glass-bg);backdrop-filter:blur(20px);display:none;align-items:center;justify-content:center;padding:2rem;z-index:1000;}
+        .editor-container.active{display:flex;}
+        .editor-panel{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--card-radius);width:90%;max-width:800px;height:80%;padding:2rem;display:flex;flex-direction:column;}
+        .editor-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;}
+        .editor-actions{display:flex;gap:0.5rem;}
+        #fileEditor{width:100%;height:100%;resize:none;background:rgba(0,0,0,0.3);border:1px solid var(--glass-border);border-radius:12px;padding:1rem;color:var(--text-main);font-family:'Monaco','Consolas','Courier New',monospace;font-size:14px;}
+        .path-display{display:flex;gap:0.5rem;align-items:center;margin-bottom:1rem;padding:0.75rem;background:rgba(255,255,255,0.05);border-radius:12px;}
+        .nav-stats{display:flex;gap:1rem;align-items:center;}
+        .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;padding:2rem;z-index:1001;}
+        .modal.active{display:flex;}
+        .modal-content{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--card-radius);padding:2rem;width:90%;max-width:500px;max-height:80vh;overflow:auto;}
+        .modal-actions{display:flex;gap:1rem;justify-content:flex-end;margin-top:1.5rem;}
+        #newFileContent{height:120px;}
+        @media(max-width:768px){.main-layout{flex-direction:column;}.sidebar{width:100%;order:2;}.file-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}.toolbar{flex-direction:column;gap:1rem;}.toolbar-left,.toolbar-right{justify-content:center;flex-wrap:wrap;}.editor-panel{width:95%;height:85%;padding:1.5rem;}}
+        @media(max-width:480px){.file-grid{grid-template-columns:1fr;}}
+    </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-brand">
-            <i class="fas fa-hdd"></i>
-            <span>File Storage</span>
+    <!-- Navigation (Consistent with index.html) -->
+    <nav class="glass-panel" style="border-radius: 0 0 20px 20px; margin-bottom: 0; padding: 1.5rem 2rem;">
+        <div class="logo">
+            <i class="fas fa-hdd"></i> File Storage
         </div>
         <div class="nav-stats">
             <span id="storageStats">0/50MB (0%)</span>
-            <button id="refreshBtn" title="Refresh">
+            <button id="refreshBtn" title="Refresh" class="btn btn-secondary" style="padding:0.5rem;">
                 <i class="fas fa-sync-alt"></i>
             </button>
         </div>
     </nav>
 
-    <!-- Main Container -->
     <div class="container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="path-display">
-                <span id="currentPath">/</span>
-                <button id="backBtn" title="Go Up">
-                    <i class="fas fa-level-up-alt"></i>
-                </button>
-            </div>
-            <div class="file-tree" id="fileTree">
-                <!-- Dynamic file tree will be populated here -->
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Toolbar -->
-            <div class="toolbar">
-                <div class="toolbar-left">
-                    <button id="newFileBtn" title="New File">
-                        <i class="fas fa-file"></i> New File
-                    </button>
-                    <button id="newDirBtn" title="New Folder">
-                        <i class="fas fa-folder"></i> New Folder
-                    </button>
-                    <button id="uploadBtn" title="Upload">
-                        <i class="fas fa-upload"></i> Upload
+        <div class="storage-container">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="path-display">
+                    <span id="currentPath">/</span>
+                    <button id="backBtn" title="Go Up" class="btn btn-secondary" style="padding:0.5rem;">
+                        <i class="fas fa-level-up-alt"></i>
                     </button>
                 </div>
-                <div class="toolbar-right">
-                    <button id="downloadBtn" title="Download All">
-                        <i class="fas fa-download"></i> Download
-                    </button>
-                    <button id="clearBtn" title="Clear All" class="danger">
-                        <i class="fas fa-trash"></i> Clear
-                    </button>
-                </div>
-            </div>
+                <div class="file-tree" id="fileTree"></div>
+            </aside>
 
-            <!-- File List -->
-            <div class="file-grid" id="fileGrid">
-                <!-- Files will be populated here -->
-            </div>
-
-            <!-- File Editor (Hidden by default) -->
-            <div class="editor-container" id="editorContainer">
-                <div class="editor-header">
-                    <span id="editorFilename"></span>
-                    <div class="editor-actions">
-                        <button id="saveBtn" title="Save">
-                            <i class="fas fa-save"></i>
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Toolbar -->
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <button id="newFileBtn" class="btn btn-primary" style="font-size:0.9rem;">
+                            <i class="fas fa-file"></i> New File
                         </button>
-                        <button id="deleteFileBtn" title="Delete" class="danger">
-                            <i class="fas fa-trash"></i>
+                        <button id="newDirBtn" class="btn btn-secondary" style="font-size:0.9rem;">
+                            <i class="fas fa-folder"></i> New Folder
                         </button>
-                        <button id="closeEditorBtn" title="Close">
-                            <i class="fas fa-times"></i>
+                        <button id="uploadBtn" class="btn btn-secondary" style="font-size:0.9rem;">
+                            <i class="fas fa-upload"></i> Upload
+                        </button>
+                    </div>
+                    <div class="toolbar-right">
+                        <button id="downloadBtn" class="btn btn-secondary">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                        <button id="clearBtn" class="btn" style="background:var(--accent-pink);color:white;" class="danger">
+                            <i class="fas fa-trash"></i> Clear
                         </button>
                     </div>
                 </div>
-                <textarea id="fileEditor" placeholder="Edit your file content here..."></textarea>
-            </div>
-        </main>
+
+                <!-- File Grid -->
+                <div class="file-grid" id="fileGrid"></div>
+
+                <!-- File Editor -->
+                <div class="editor-container" id="editorContainer">
+                    <div class="editor-panel">
+                        <div class="editor-header">
+                            <span id="editorFilename" style="font-weight:700;font-size:1.2rem;"></span>
+                            <div class="editor-actions">
+                                <button id="saveBtn" class="btn btn-primary" style="padding:0.5rem 1rem;">
+                                    <i class="fas fa-save"></i>
+                                </button>
+                                <button id="deleteFileBtn" class="btn" style="background:var(--accent-pink);color:white;padding:0.5rem 1rem;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button id="closeEditorBtn" class="btn btn-secondary" style="padding:0.5rem 1rem;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <textarea id="fileEditor" placeholder="Edit your file content here..."></textarea>
+                    </div>
+                </div>
+            </main>
+        </div>
     </div>
 
     <!-- New File Modal -->
     <div class="modal" id="newFileModal">
         <div class="modal-content">
-            <h3>New File</h3>
-            <input type="text" id="newFileName" placeholder="File name (e.g. document.txt)">
+            <h3 style="margin:0 0 1rem 0;"><i class="fas fa-file"></i> New File</h3>
+            <input type="text" id="newFileName" placeholder="File name (e.g. notes.txt)" style="width:100%;padding:0.75rem;border-radius:8px;border:1px solid var(--glass-border);background:rgba(255,255,255,0.1);color:var(--text-main);margin-bottom:1rem;">
             <textarea id="newFileContent" placeholder="Initial content..."></textarea>
             <div class="modal-actions">
-                <button id="createFileBtn">Create</button>
-                <button id="cancelFileBtn">Cancel</button>
+                <button id="createFileBtn" class="btn btn-primary">Create</button>
+                <button id="cancelFileBtn" class="btn btn-secondary">Cancel</button>
             </div>
         </div>
     </div>
@@ -104,237 +132,58 @@
     <!-- New Directory Modal -->
     <div class="modal" id="newDirModal">
         <div class="modal-content">
-            <h3>New Folder</h3>
-            <input type="text" id="newDirName" placeholder="Folder name">
+            <h3 style="margin:0 0 1rem 0;"><i class="fas fa-folder"></i> New Folder</h3>
+            <input type="text" id="newDirName" placeholder="Folder name" style="width:100%;padding:0.75rem;border-radius:8px;border:1px solid var(--glass-border);background:rgba(255,255,255,0.1);color:var(--text-main);">
             <div class="modal-actions">
-                <button id="createDirBtn">Create</button>
-                <button id="cancelDirBtn">Cancel</button>
+                <button id="createDirBtn" class="btn btn-primary">Create</button>
+                <button id="cancelDirBtn" class="btn btn-secondary">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Load Storage JS -->
+    <!-- Load Storage JS first -->
     <script src="js/storage.js"></script>
     
-    <!-- Main App Logic -->
+    <!-- Main App Logic (Condensed & Mobile Optimized) -->
     <script>
         class FileStorageApp {
-            constructor() {
-                this.drive = window.virtualDrive;
-                this.init();
-            }
-
-            init() {
-                this.bindEvents();
-                this.refresh();
-                this.updateStats();
-            }
-
-            bindEvents() {
-                // Toolbar buttons
-                document.getElementById('newFileBtn').onclick = () => this.showNewFileModal();
-                document.getElementById('newDirBtn').onclick = () => this.showNewDirModal();
-                document.getElementById('uploadBtn').onclick = () => this.handleUpload();
-                document.getElementById('downloadBtn').onclick = () => this.handleDownload();
-                document.getElementById('clearBtn').onclick = () => this.clearAll();
-                document.getElementById('refreshBtn').onclick = () => this.refresh();
-
-                // Navigation
-                document.getElementById('backBtn').onclick = () => this.goUp();
-
-                // Modals
-                document.getElementById('createFileBtn').onclick = () => this.createFile();
-                document.getElementById('cancelFileBtn').onclick = () => this.hideNewFileModal();
-                document.getElementById('createDirBtn').onclick = () => this.createDir();
-                document.getElementById('cancelDirBtn').onclick = () => this.hideNewDirModal();
-
-                // Editor
-                document.getElementById('saveBtn').onclick = () => this.saveFile();
-                document.getElementById('deleteFileBtn').onclick = () => this.deleteCurrentFile();
-                document.getElementById('closeEditorBtn').onclick = () => this.closeEditor();
-
-                // Global click handler for file selection
-                document.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('file-item')) {
-                        this.openFile(e.target.dataset.filename);
-                    }
+            constructor() {this.drive=window.virtualDrive;this.init();}
+            init(){this.bindEvents();this.refresh();this.updateStats();}
+            bindEvents(){
+                ['newFileBtn','newDirBtn','uploadBtn','downloadBtn','clearBtn','refreshBtn','backBtn','createFileBtn','cancelFileBtn','createDirBtn','cancelDirBtn','saveBtn','deleteFileBtn','closeEditorBtn'].forEach(id=>{
+                    const el=document.getElementById(id);if(el)el.onclick=()=>this[id.replace('Btn','')?.camelCase()||id]();
                 });
+                document.addEventListener('click',e=>{if(e.target.classList.contains('file-item'))this.openFile(e.target.dataset.filename);});
             }
-
-            refresh() {
-                this.renderFiles();
-                this.updatePath();
-                this.updateStats();
-            }
-
-            renderFiles() {
-                const files = this.drive.list();
-                const fileGrid = document.getElementById('fileGrid');
-                fileGrid.innerHTML = files.map(file => `
-                    <div class="file-item ${file.type === 'directory' ? 'directory' : ''}" 
-                         data-filename="${file.name}" data-path="${file.path}">
-                        <i class="fas ${file.type === 'directory' ? 'fa-folder' : 'fa-file'}"></i>
-                        <span>${file.name}</span>
-                        <small>${this.formatSize(file.size)}${file.type === 'directory' ? '' : ' • ' + this.formatDate(file.modified)}</small>
-                    </div>
-                `).join('');
-            }
-
-            updatePath() {
-                document.getElementById('currentPath').textContent = this.drive.pwd();
-            }
-
-            updateStats() {
-                const stats = this.drive.getStats();
-                document.getElementById('storageStats').textContent = 
-                    `${this.formatSize(stats.used)}/${this.formatSize(stats.total)} (${stats.usagePercent}%)`;
-            }
-
-            openFile(filename) {
-                try {
-                    const content = this.drive.readFile(filename);
-                    document.getElementById('editorFilename').textContent = filename;
-                    document.getElementById('fileEditor').value = content;
-                    document.getElementById('editorContainer').classList.add('active');
-                } catch (e) {
-                    alert(e.message);
-                }
-            }
-
-            saveFile() {
-                const filename = document.getElementById('editorFilename').textContent;
-                const content = document.getElementById('fileEditor').value;
-                try {
-                    this.drive.writeFile(filename, content);
-                    this.refresh();
-                    alert('File saved!');
-                } catch (e) {
-                    alert(e.message);
-                }
-            }
-
-            deleteCurrentFile() {
-                if (confirm('Delete this file?')) {
-                    const filename = document.getElementById('editorFilename').textContent;
-                    this.drive.deleteFile(filename);
-                    this.closeEditor();
-                    this.refresh();
-                }
-            }
-
-            closeEditor() {
-                document.getElementById('editorContainer').classList.remove('active');
-            }
-
-            goUp() {
-                try {
-                    this.drive.cd('..');
-                    this.refresh();
-                } catch (e) {
-                    alert(e.message);
-                }
-            }
-
-            showNewFileModal() {
-                document.getElementById('newFileModal').classList.add('active');
-            }
-
-            hideNewFileModal() {
-                document.getElementById('newFileModal').classList.remove('active');
-                document.getElementById('newFileName').value = '';
-                document.getElementById('newFileContent').value = '';
-            }
-
-            createFile() {
-                const name = document.getElementById('newFileName').value.trim();
-                const content = document.getElementById('newFileContent').value;
-                if (!name) return alert('Please enter a filename');
-
-                try {
-                    this.drive.createFile(name, content);
-                    this.hideNewFileModal();
-                    this.refresh();
-                } catch (e) {
-                    alert(e.message);
-                }
-            }
-
-            showNewDirModal() {
-                document.getElementById('newDirModal').classList.add('active');
-            }
-
-            hideNewDirModal() {
-                document.getElementById('newDirModal').classList.remove('active');
-                document.getElementById('newDirName').value = '';
-            }
-
-            createDir() {
-                const name = document.getElementById('newDirName').value.trim();
-                if (!name) return alert('Please enter a folder name');
-
-                try {
-                    this.drive.mkdir(name);
-                    this.hideNewDirModal();
-                    this.refresh();
-                } catch (e) {
-                    alert(e.message);
-                }
-            }
-
-            formatSize(bytes) {
-                if (bytes === 0) return '0B';
-                const k = 1024;
-                const sizes = ['B', 'KB', 'MB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-            }
-
-            formatDate(timestamp) {
-                return new Date(timestamp).toLocaleDateString();
-            }
-
-            async handleUpload() {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.onchange = (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (ev) => {
-                            try {
-                                this.drive.createFile(file.name, ev.target.result);
-                                this.refresh();
-                            } catch (err) {
-                                alert(err.message);
-                            }
-                        };
-                        reader.readAsText(file);
-                    }
-                };
-                input.click();
-            }
-
-            async handleDownload() {
-                try {
-                    // Note: Requires JSZip library for full ZIP export
-                    alert('ZIP export requires JSZip library. Files saved to localStorage.');
-                } catch (e) {
-                    alert('Download not available without JSZip');
-                }
-            }
-
-            clearAll() {
-                if (confirm('Delete ALL files? This cannot be undone!')) {
-                    this.drive.clear();
-                    this.refresh();
-                }
-            }
+            refresh(){this.renderFiles();this.updatePath();this.updateStats();}
+            renderFiles(){document.getElementById('fileGrid').innerHTML=this.drive.list().map(f=>`
+                <div class="file-item ${f.type==='directory'?'directory':''}" data-filename="${f.name}">
+                    <i class="fas ${f.type==='directory'?'fa-folder':'fa-file'}"></i>
+                    <span>${f.name}</span>
+                    <small>${this.formatSize(f.size)}${f.type==='directory'?'':` • ${this.formatDate(f.modified)}`}</small>
+                </div>`).join('');}
+            updatePath(){document.getElementById('currentPath').textContent=this.drive.pwd();}
+            updateStats(){const s=this.drive.getStats();document.getElementById('storageStats').textContent=`${this.formatSize(s.used)}/${this.formatSize(s.total)} (${s.usagePercent}%)`;}
+            openFile(n){try{const c=this.drive.readFile(n);document.getElementById('editorFilename').textContent=n;document.getElementById('fileEditor').value=c;document.getElementById('editorContainer').classList.add('active');}catch(e){alert(e.message);}}
+            saveFile(){try{const n=document.getElementById('editorFilename').textContent,c=document.getElementById('fileEditor').value;this.drive.writeFile(n,c);this.refresh();alert('File saved!');}catch(e){alert(e.message);}}
+            deleteCurrentFile(){if(confirm('Delete this file?')){this.drive.deleteFile(document.getElementById('editorFilename').textContent);this.closeEditor();this.refresh();}}
+            closeEditor(){document.getElementById('editorContainer').classList.remove('active');}
+            goUp(){try{this.drive.cd('..');this.refresh();}catch(e){alert(e.message);}}
+            showNewFileModal(){document.getElementById('newFileModal').classList.add('active');}
+            hideNewFileModal(){document.getElementById('newFileModal').classList.remove('active');document.getElementById('newFileName').value=document.getElementById('newFileContent').value='';}
+            createFile(){const n=document.getElementById('newFileName').value.trim(),c=document.getElementById('newFileContent').value;if(!n)return alert('Please enter a filename');try{this.drive.createFile(n,c);this.hideNewFileModal();this.refresh();}catch(e){alert(e.message);}}
+            showNewDirModal(){document.getElementById('newDirModal').classList.add('active');}
+            hideNewDirModal(){document.getElementById('newDirModal').classList.remove('active');document.getElementById('newDirName').value='';}
+            createDir(){const n=document.getElementById('newDirName').value.trim();if(!n)return alert('Please enter a folder name');try{this.drive.mkdir(n);this.hideNewDirModal();this.refresh();}catch(e){alert(e.message);}}
+            formatSize(b){if(b===0)return'0B';const k=1024,s=['B','KB','MB'],i=Math.floor(Math.log(b)/Math.log(k));return parseFloat((b/Math.pow(k,i)).toFixed(2))+' '+s[i];}
+            formatDate(t){return new Date(t).toLocaleDateString();}
+            handleUpload(){const i=document.createElement('input');i.type='file';i.onchange=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>{try{this.drive.createFile(f.name,ev.target.result);this.refresh();}catch(err){alert(err.message);}};r.readAsText(f);}};i.click();}
+            handleDownload(){alert('Files saved in localStorage. Full ZIP export requires JSZip library.');}
+            clearAll(){if(confirm('Delete ALL files? This cannot be undone!')){this.drive.clear();this.refresh();}}
+            newFile(){this.showNewFileModal();}
+            newDir(){this.showNewDirModal();}
         }
-
-        // Initialize app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            new FileStorageApp();
-        });
+        document.addEventListener('DOMContentLoaded',()=>new FileStorageApp());
     </script>
 </body>
 </html>
