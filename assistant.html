@@ -3,81 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤖 AI Assistant - Student OS</title>
+    <title>AI Assistant - Student OS</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Additional AI Assistant Styles */
+        .ai-container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .section { margin-bottom: 3rem; }
+        .section-title { 
+            font-size: 1.8rem; 
+            font-weight: 800; 
+            margin-bottom: 1.5rem; 
+            background: linear-gradient(90deg, var(--accent-pink), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .input-group { 
+            display: flex; 
+            gap: 1rem; 
+            flex-wrap: wrap; 
+            align-items: end; 
+        }
+        .form-input { 
+            flex: 1; 
+            min-width: 300px; 
+            padding: 15px 20px; 
+            background: rgba(255,255,255,0.08); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 15px; 
+            color: white; 
+            font-size: 1rem; 
+            font-family: 'Nunito', sans-serif;
+        }
+        .form-input::placeholder { color: var(--text-muted); }
+        .form-input:focus { 
+            outline: none; 
+            background: rgba(255,255,255,0.12); 
+            border-color: var(--accent-blue);
+        }
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 1rem; 
+            margin: 1rem 0; 
+        }
+        .stat-item { 
+            background: rgba(255,255,255,0.05); 
+            padding: 1rem; 
+            border-radius: 12px; 
+            text-align: center; 
+            border: 1px solid var(--glass-border);
+        }
+        .status { 
+            padding: 0.75rem 1rem; 
+            border-radius: 8px; 
+            margin: 1rem 0; 
+            font-weight: 600; 
+            display: none; 
+        }
+        .chat-container { 
+            background: rgba(255,255,255,0.05); 
+            border-radius: 15px; 
+            padding: 1.5rem; 
+            border: 1px solid var(--glass-border);
+        }
+        .chat-window {
+            height: 350px;
+            overflow-y: auto;
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .message {
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 85%;
+            font-size: 0.95rem;
+            position: relative;
+        }
+        .message.user {
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .message.assistant {
+            background: rgba(255,255,255,0.12);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .message time {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .filter-results {
+            display: none;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 2rem;
+            border: 1px solid var(--glass-border);
+            margin-top: 1rem;
+        }
+        .api-section {
+            background: rgba(255,255,255,0.03);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 2rem;
+        }
+        @media (max-width: 768px) {
+            .input-group { flex-direction: column; align-items: stretch; }
+            .form-input { min-width: auto; }
+            .chat-window { height: 300px; }
+        }
+    </style>
 </head>
 <body>
-    <nav class="glass-nav">
-        <div class="logo">🤖 Student OS</div>
+    <!-- Navigation -->
+    <nav class="glass-panel" style="border-radius: 0 0 20px 20px; margin-bottom: 0;">
+        <div class="logo">Student OS</div>
         <div class="nav-links">
-            <a href="index.html">🏠 Home</a>
-            <a href="pomodoro.html">⏱️ Pomodoro</a>
-            <a href="calculator.html">🧮 Calc</a>
-            <a href="assistant.html" class="active">🤖 AI</a>
-            <a href="search.html">🔍 Search</a>
-            <a href="storage.html">💾 Storage</a>
+            <a href="index.html">Home</a>
+            <a href="pomodoro.html">Pomodoro</a>
+            <a href="calculator.html">Calc</a>
+            <a href="assistant.html" class="active">AI</a>
+            <a href="search.html">Search</a>
+            <a href="storage.html">Storage</a>
         </div>
     </nav>
 
-    <div class="container">
-        <div class="glass-panel hero">
-            <h1 class="hero-title">🤖 Super AI Assistant</h1>
-            <p class="hero-subtitle">Paste notes → Save → Ask = Instant answers!</p>
+    <div class="ai-container">
+        <!-- Notes Section -->
+        <div class="glass-panel section">
+            <h2 class="section-title">📝 Study Notes</h2>
+            <div class="input-group">
+                <textarea 
+                    id="notes-input" 
+                    class="form-input" 
+                    rows="6" 
+                    placeholder="Paste your lecture notes, textbook content, or study material here..."
+                ></textarea>
+                <div>
+                    <button id="save-notes-btn" class="btn btn-primary">💾 Save Notes</button>
+                    <button id="clear-notes-btn" class="btn btn-secondary" style="margin-left: 0.5rem;">🗑️ Clear</button>
+                </div>
+            </div>
+            <div id="notes-status" class="status"></div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div id="notes-info" style="font-size: 0.9rem; opacity: 0.8;">Not saved</div>
+                    <div id="notes-count-display" style="font-size: 1.5rem; font-weight: 800; color: var(--accent-blue);">0 words</div>
+                </div>
+            </div>
         </div>
 
-        <div class="glass-panel">
-            <div class="assistant-container">
-                <!-- NOTES SECTION -->
-                <div class="notes-section">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3 style="margin: 0; color: var(--accent-blue);">📚 Your Notes</h3>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button id="save-notes-btn" class="btn btn-primary">💾 Save</button>
-                            <button id="clear-notes-btn" class="btn btn-secondary">🗑️ Clear</button>
-                        </div>
-                    </div>
-                    <textarea 
-                        id="notes-input" 
-                        class="notes-textarea" 
-                        placeholder="📝 Type or paste your study notes here...
-Examples:
-- Photosynthesis: Plants convert CO2 + H2O + sunlight → glucose + O2
-- Mitochondria: Powerhouse of the cell
-- Deadlock: 4 conditions (mutual exclusion, hold/wait, no preemption, circular wait)"
-                        rows="14"
-                    ></textarea>
-                    <div style="margin-top: 1rem; font-size: 0.9rem; display: flex; justify-content: space-between;">
-                        <span id="notes-count-display">0 words</span>
-                        <span id="notes-info">Not saved</span>
-                    </div>
-                    <div id="notes-status" class="status" style="display: none; margin-top: 0.5rem;"></div>
-                </div>
+        <!-- API Key Section -->
+        <div class="glass-panel api-section">
+            <h3 style="margin-bottom: 1rem; color: var(--accent-purple);">🔑 Groq API Key (Free)</h3>
+            <div class="input-group" style="gap: 0.75rem;">
+                <input 
+                    id="api-key-input" 
+                    type="password" 
+                    class="form-input" 
+                    placeholder="Enter your Groq API key..."
+                >
+                <button id="save-api-key-btn" class="btn btn-primary">Save Key</button>
+            </div>
+            <div id="api-status" style="margin-top: 0.5rem; font-size: 0.9rem;"></div>
+            <div style="margin-top: 0.75rem; font-size: 0.85rem; opacity: 0.8;">
+                Get free key: <a href="https://console.groq.com/keys" target="_blank" style="color: var(--accent-blue);">console.groq.com/keys</a>
+            </div>
+        </div>
 
-                <!-- CHAT SECTION -->
-                <div class="chat-container">
-                    <div class="chat-header">
-                        <h3 style="margin: 0;">💬 AI Chat</h3>
-                        <div style="font-size: 0.85rem;">
-                            <span id="chat-notes-status">No notes</span>
-                            <span id="questions-count-display" style="margin-left: 1rem;">0 asked</span>
-                        </div>
-                    </div>
-                    <div id="chat-messages" class="chat-messages">
-                        <div class="message assistant">
-                            <time>🤖</time>
-                            <strong>Welcome! 👋</strong><br>
-                            <small>1️⃣ Notes → 2️⃣ Save → 3️⃣ Ask = Magic! ✨</small>
-                        </div>
-                    </div>
-                    <div class="chat-input-container">
-                        <input id="question-input" class="chat-input" placeholder="What is photosynthesis?">
-                        <button id="send-btn" class="btn btn-primary">Ask AI</button>
-                    </div>
+        <!-- Chat Section -->
+        <div class="glass-panel section">
+            <h2 class="section-title">💬 AI Study Assistant</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div id="chat-notes-status" style="font-size: 0.9rem; opacity: 0.8;">No notes</div>
+                    <div style="font-size: 0.85rem; opacity: 0.7;">Notes loaded</div>
                 </div>
+                <div class="stat-item">
+                    <div id="questions-count-display" style="font-size: 1.5rem; font-weight: 800; color: var(--accent-pink);">0 asked</div>
+                    <div style="font-size: 0.85rem; opacity: 0.7;">Questions</div>
+                </div>
+            </div>
+            <div class="chat-container">
+                <div id="chat-messages" class="chat-window"></div>
+                <div class="input-group">
+                    <input 
+                        id="question-input" 
+                        class="form-input" 
+                        placeholder="Ask about your notes (e.g. 'What is photosynthesis?'..."
+                    >
+                    <button id="send-btn" class="btn btn-primary">Send 🚀</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter/Analyze Section -->
+        <div class="glass-panel section">
+            <h2 class="section-title">🔍 Note Analyzer</h2>
+            <div class="input-group">
+                <input 
+                    id="filter-topic-input" 
+                    class="form-input" 
+                    placeholder="Enter topic to analyze (e.g. 'Photosynthesis', 'World War II'..."
+                >
+                <button id="analyze-btn" class="btn btn-primary">🔍 Analyze Notes</button>
+            </div>
+            <div id="filter-results" class="filter-results">
+                <div id="filter-sentences"></div>
+                <div id="filter-correction" style="margin-top: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.08); border-radius: 10px; font-style: italic;"></div>
             </div>
         </div>
     </div>
 
-    <script src="js/assistant.js"></script>
+    <!-- Load the AI Assistant -->
+    <script src="ai-assistant.js"></script>
 </body>
 </html>
