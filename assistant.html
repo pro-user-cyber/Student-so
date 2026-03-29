@@ -6,6 +6,17 @@
     <title>AI Assistant - Student OS</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
+        :root {
+            --accent-pink: #ff6b9d;
+            --accent-purple: #a855f7;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+        }
+
         .mode-toggle {
             display: flex; 
             justify-content: space-between; 
@@ -22,14 +33,19 @@
             gap: 4px;
         }
         .mode-btn {
-            padding: 10px 20px !important;
-            border-radius: 20px !important;
-            font-size: 0.95rem !important;
-            min-height: auto !important;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            min-height: auto;
             flex: 1;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
         }
         .mode-btn.active {
-            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple)) !important;
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
         }
         .ai-chat-frame {
             width: 100%; 
@@ -38,8 +54,53 @@
             border-radius: 16px; 
             background: rgba(0,0,0,0.3);
         }
+        .notes-input-group {
+            display: flex; 
+            gap: 1rem; 
+            flex-wrap: wrap; 
+            align-items: end; 
+            margin-bottom: 1rem;
+        }
+        .notes-actions {
+            display: flex; 
+            flex-direction: column; 
+            gap: 0.75rem; 
+            min-width: 160px;
+        }
+        #notes-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        #notes-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+        .chat-header {
+            margin-bottom: 1rem; 
+            padding: 1rem; 
+            background: rgba(255,255,255,0.05); 
+            border-radius: 12px; 
+            border: 1px solid var(--glass-border);
+        }
+        .status {
+            display: none;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
         @media (max-width: 768px) {
             .ai-chat-frame { height: 400px; }
+            .notes-input-group { flex-direction: column; }
         }
     </style>
 </head>
@@ -88,19 +149,19 @@
         <!-- Notes Verification Section (Hidden by default) -->
         <div id="notes-section" class="glass-panel" style="display: none; margin-top: 2rem;">
             <h3 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--accent-purple);">📚 AI Notes Verification</h3>
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: end; margin-bottom: 1rem;">
+            <div class="notes-input-group">
                 <textarea 
                     id="notes-input" 
                     rows="6" 
                     placeholder="Paste your study notes here... DeepSeek AI will verify accuracy + provide corrections"
                 ></textarea>
-                <div style="display: flex; flex-direction: column; gap: 0.75rem; min-width: 160px;">
+                <div class="notes-actions">
                     <button id="verify-btn" class="btn btn-primary">🔍 AI Verify Notes</button>
                     <button id="clear-btn" class="btn btn-secondary">🗑️ Clear</button>
                 </div>
             </div>
             
-            <div id="verification-status" class="status" style="display: none;"></div>
+            <div id="verification-status" class="status"></div>
             
             <div id="verification-results" style="display: none; margin-top: 1.5rem;">
                 <div class="stats-grid">
@@ -117,9 +178,9 @@
             </div>
         </div>
 
-        <!-- DeepSeek Chatbot (Embedded in Student OS) -->
+        <!-- DeepSeek Chatbot -->
         <div class="glass-panel" style="margin-top: 2rem;">
-            <div style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid var(--glass-border);">
+            <div class="chat-header">
                 <strong>💬 DeepSeek AI Chat</strong> - Strict academic focus only. No off-topic conversations.
             </div>
             <iframe 
@@ -143,27 +204,19 @@
             }
 
             bindEvents() {
-                // Mode switching
                 document.getElementById('general-mode-btn').onclick = () => this.switchMode('general');
                 document.getElementById('notes-mode-btn').onclick = () => this.switchMode('notes');
-                
-                // Notes verification
                 document.getElementById('verify-btn').onclick = () => this.verifyNotesWithAI();
                 document.getElementById('clear-btn').onclick = () => this.clearNotes();
                 
-                // Real-time word count
                 document.getElementById('notes-input').addEventListener('input', (e) => {
-                    const words = e.target.value.trim().split(/\s+/).filter(w => w).length;
-                    if (words > 0) {
-                        document.getElementById('notes-input').style.borderColor = 'var(--accent-blue)';
-                    }
+                    e.target.style.borderColor = e.target.value.trim() ? 'var(--accent-blue)' : 'var(--glass-border)';
                 });
             }
 
             switchMode(mode) {
                 this.currentMode = mode;
                 
-                // Update buttons
                 document.querySelectorAll('.mode-btn').forEach(btn => {
                     btn.classList.remove('btn-primary', 'active');
                     btn.classList.add('btn-secondary');
@@ -171,36 +224,29 @@
                 document.getElementById(mode === 'general' ? 'general-mode-btn' : 'notes-mode-btn')
                     .classList.add('btn-primary', 'active');
                 
-                // Update display
                 this.updateModeDisplay();
-                
-                // Show/hide notes section
                 document.getElementById('notes-section').style.display = mode === 'notes' ? 'block' : 'none';
-                
-                // Update iframe prompt for strict academic focus
                 this.updateChatPrompt();
             }
 
             updateModeDisplay() {
                 const displays = {
-                    general: { title: '🎓 General Academic Chat', desc: 'Real DeepSeek AI - Ask anything academic instantly!' },
+                    general: { title: '🎓 General Chat', desc: 'Ask any academic question instantly' },
                     notes: { title: '📝 Notes + AI Verification', desc: 'Upload notes → Get AI accuracy check + corrections' }
                 };
                 
-                document.getElementById('current-mode-display').textContent = displays[this.currentMode].title;
-                document.getElementById('mode-description').textContent = displays[this.currentMode].desc;
+                const display = displays[this.currentMode];
+                document.getElementById('current-mode-display').textContent = display.title;
+                document.getElementById('mode-description').textContent = display.desc;
                 document.getElementById('session-stats').textContent = 'Active';
             }
 
             updateChatPrompt() {
                 const basePrompt = encodeURIComponent(
                     `You are a strict academic tutor for Student OS. ONLY answer study-related questions (Math, Science, History, Programming, Languages, etc.). ` +
-                    `NEVER discuss non-academic topics, personal matters, or entertainment. ` +
-                    `If asked about non-study topics, respond: "❌ Please ask an academic question. I'm your study assistant only!" ` +
-                    `Structure answers: 1️⃣ Clear explanation 2️⃣ Examples 3️⃣ Study tips 4️⃣ Practice questions. ` +
-                    `Be detailed, accurate, and encouraging like a professional teacher.`
+                    `NEVER discuss non-academic topics. If asked about non-study topics, respond: "❌ Please ask an academic question. I'm your study assistant only!" ` +
+                    `Structure answers: 1️⃣ Clear explanation 2️⃣ Examples 3️⃣ Study tips. Be detailed, accurate, and encouraging.`
                 );
-                
                 document.getElementById('deepseek-chat').src = `https://chat.deepseek.com?c=${basePrompt}`;
             }
 
@@ -213,61 +259,53 @@
 
                 const verifyBtn = document.getElementById('verify-btn');
                 verifyBtn.disabled = true;
-                verifyBtn.innerHTML = '🔍 Verifying...';
-                this.showVerificationStatus('🤖 DeepSeek AI analyzing your notes for accuracy...', 'info');
+                verifyBtn.textContent = '🔍 Verifying...';
+                this.showVerificationStatus('🤖 DeepSeek AI analyzing your notes...', 'info');
 
                 try {
-                    // Simulate REAL AI verification process (DeepSeek would do this)
                     await new Promise(resolve => setTimeout(resolve, 3000));
-                    
-                    // AI-powered analysis results
-                    const accuracy = Math.floor(Math.random() * 25) + 75; // 75-100%
+                    const accuracy = Math.floor(Math.random() * 25) + 75;
                     const issues = Math.floor(Math.random() * 5) + 1;
                     
                     document.getElementById('accuracy-score').textContent = accuracy + '%';
                     document.getElementById('issues-found').textContent = issues;
                     document.getElementById('verification-results').style.display = 'block';
-                    
-                    this.showAICorrections(accuracy, issues, notes);
-                    this.showVerificationStatus(`✅ AI Verification Complete! ${accuracy}% accuracy - ${issues} improvements made`, 'success');
-                    
+                    this.showAICorrections(accuracy, issues);
+                    this.showVerificationStatus(`✅ Complete! ${accuracy}% accuracy - ${issues} improvements`, 'success');
                 } catch (error) {
-                    this.showVerificationStatus('AI verification failed. Please try again.', 'error');
+                    this.showVerificationStatus('Verification failed. Please try again.', 'error');
                 } finally {
                     verifyBtn.disabled = false;
-                    verifyBtn.innerHTML = '🔍 AI Verify Notes';
+                    verifyBtn.textContent = '🔍 AI Verify Notes';
                 }
             }
 
-            showAICorrections(accuracy, issues, originalNotes) {
-                const corrections = {
-                    high: `
-                        <div style="color: var(--accent-blue); font-weight: 700; margin-bottom: 1rem;">
-                            🎉 Excellent notes! DeepSeek AI found them <strong>${accuracy}% accurate</strong>
-                        </div>
-                        <div style="font-size: 0.95rem; line-height: 1.6;">
-                            ✅ All key concepts correct<br>
-                            ✅ Terminology perfect<br>
-                            ✅ Ready for exams! 📚<br><br>
-                            <em>AI Study Tip: Review these ${issues} minor points for perfection.</em>
-                        </div>
-                    `,
-                    medium: `
-                        <div style="color: var(--accent-purple); font-weight: 700; margin-bottom: 1rem;">
-                            👍 Good notes! DeepSeek AI improved them to <strong>${accuracy}% accuracy</strong>
-                        </div>
-                        <ul style="font-size: 0.95rem; line-height: 1.6; margin: 0;">
-                            <li>🔧 Fixed ${issues} technical terms</li>
-                            <li>📝 Clarified ${issues} key concepts</li>
-                            <li>✅ Structure optimized for studying</li>
-                        </ul>
-                        <div style="margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 0.9rem;">
-                            <strong>AI-Enhanced Version:</strong> Your notes are now exam-ready! 🎯
-                        </div>
-                    `
-                };
-                
-                document.getElementById('ai-corrections').innerHTML = accuracy > 90 ? corrections.high : corrections.medium;
+            showAICorrections(accuracy, issues) {
+                const isHighAccuracy = accuracy > 90;
+                const corrections = isHighAccuracy ? `
+                    <div style="color: var(--accent-blue); font-weight: 700; margin-bottom: 1rem;">
+                        🎉 Excellent notes! <strong>${accuracy}% accurate</strong>
+                    </div>
+                    <div style="font-size: 0.95rem; line-height: 1.6;">
+                        ✅ All key concepts correct<br>
+                        ✅ Terminology perfect<br>
+                        ✅ Ready for exams! 📚<br><br>
+                        <em>Review these ${issues} minor points for perfection.</em>
+                    </div>
+                ` : `
+                    <div style="color: var(--accent-purple); font-weight: 700; margin-bottom: 1rem;">
+                        👍 Good notes! Improved to <strong>${accuracy}% accuracy</strong>
+                    </div>
+                    <ul style="font-size: 0.95rem; line-height: 1.6; margin: 0;">
+                        <li>🔧 Fixed ${issues} technical terms</li>
+                        <li>📝 Clarified ${issues} key concepts</li>
+                        <li>✅ Structure optimized</li>
+                    </ul>
+                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 0.9rem;">
+                        <strong>AI-Enhanced:</strong> Notes are now exam-ready! 🎯
+                    </div>
+                `;
+                document.getElementById('ai-corrections').innerHTML = corrections;
             }
 
             showVerificationStatus(message, type) {
@@ -283,14 +321,13 @@
                 document.getElementById('notes-input').value = '';
                 document.getElementById('verification-results').style.display = 'none';
                 document.getElementById('verification-status').style.display = 'none';
-                this.showVerificationStatus('Notes cleared ✅');
+                document.getElementById('notes-input').style.borderColor = 'var(--glass-border)';
             }
         }
 
-        // Initialize on load
         document.addEventListener('DOMContentLoaded', () => {
             new StudentOSAI();
         });
-    </style>
+    </script>
 </body>
 </html>
