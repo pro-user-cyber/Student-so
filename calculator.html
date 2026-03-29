@@ -179,6 +179,44 @@
                 }
             }
 
+            add() {
+                this.handleOperator('+');
+            }
+
+            subtract() {
+                this.handleOperator('−');
+            }
+
+            multiply() {
+                this.handleOperator('×');
+            }
+
+            divide() {
+                this.handleOperator('÷');
+            }
+
+            handleOperator(operator) {
+                if (this.resultMode) {
+                    this.expression = this.resultMode.toString();
+                    this.resultMode = false;
+                }
+                
+                if (this.expression === '') {
+                    return;
+                }
+                
+                const lastChar = this.expression.slice(-1);
+                const operators = ['+', '−', '×', '÷'];
+                
+                if (operators.includes(lastChar)) {
+                    this.expression = this.expression.slice(0, -1) + operator;
+                } else {
+                    this.expression += operator;
+                }
+                
+                this.updateDisplay();
+            }
+
             append(value) {
                 if (this.resultMode) {
                     this.expression = this.resultMode.toString();
