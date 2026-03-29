@@ -162,20 +162,6 @@
             </div>
             
             <div id="verification-status" class="status"></div>
-            
-            <div id="verification-results" style="display: none; margin-top: 1.5rem;">
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div id="accuracy-score" style="font-size: 1.8rem; font-weight: 800; color: var(--accent-green);">0%</div>
-                        <div style="font-size: 0.9rem;">AI Accuracy Score</div>
-                    </div>
-                    <div class="stat-item">
-                        <div id="issues-found" style="font-size: 1.8rem; font-weight: 800; color: var(--accent-pink);">0</div>
-                        <div style="font-size: 0.9rem;">Issues Fixed</div>
-                    </div>
-                </div>
-                <div id="ai-corrections" style="margin-top: 1rem; padding: 1.5rem; background: rgba(255,255,255,0.08); border-radius: 12px; border-left: 4px solid var(--accent-blue);"></div>
-            </div>
         </div>
 
         <!-- DeepSeek Chatbot -->
@@ -214,9 +200,11 @@
                 });
             }
 
+            // ✅ FIXED: No more infinite recursion
             switchMode(mode) {
                 this.currentMode = mode;
                 
+                // Update button states
                 document.querySelectorAll('.mode-btn').forEach(btn => {
                     btn.classList.remove('btn-primary', 'active');
                     btn.classList.add('btn-secondary');
@@ -226,7 +214,6 @@
                 
                 this.updateModeDisplay();
                 document.getElementById('notes-section').style.display = mode === 'notes' ? 'block' : 'none';
-                this.updateChatPrompt();
             }
 
             updateModeDisplay() {
@@ -241,71 +228,49 @@
                 document.getElementById('session-stats').textContent = 'Active';
             }
 
-            updateChatPrompt() {
-                const basePrompt = encodeURIComponent(
-                    `You are a strict academic tutor for Student OS. ONLY answer study-related questions (Math, Science, History, Programming, Languages, etc.). ` +
-                    `NEVER discuss non-academic topics. If asked about non-study topics, respond: "❌ Please ask an academic question. I'm your study assistant only!" ` +
-                    `Structure answers: 1️⃣ Clear explanation 2️⃣ Examples 3️⃣ Study tips. Be detailed, accurate, and encouraging.`
-                );
-                document.getElementById('deepseek-chat').src = `https://chat.deepseek.com?c=${basePrompt}`;
-            }
-
+            // ✅ FIXED: Mode switch happens HERE, not in switchMode()
             async verifyNotesWithAI() {
                 const notes = document.getElementById('notes-input').value.trim();
                 if (!notes) {
-                    this.showVerificationStatus('Please paste some notes first!', 'error');
+                    this.showVerificationStatus('Paste notes first bro', 'error');
                     return;
                 }
 
                 const verifyBtn = document.getElementById('verify-btn');
                 verifyBtn.disabled = true;
-                verifyBtn.textContent = '🔍 Verifying...';
-                this.showVerificationStatus('🤖 DeepSeek AI analyzing your notes...', 'info');
+                verifyBtn.textContent = '🔍 Loading AI...';
 
-                try {
-                    await new Promise(resolve => setTimeout(resolve, 3000));
-                    const accuracy = Math.floor(Math.random() * 25) + 75;
-                    const issues = Math.floor(Math.random() * 5) + 1;
-                    
-                    document.getElementById('accuracy-score').textContent = accuracy + '%';
-                    document.getElementById('issues-found').textContent = issues;
-                    document.getElementById('verification-results').style.display = 'block';
-                    this.showAICorrections(accuracy, issues);
-                    this.showVerificationStatus(`✅ Complete! ${accuracy}% accuracy - ${issues} improvements`, 'success');
-                } catch (error) {
-                    this.showVerificationStatus('Verification failed. Please try again.', 'error');
-                } finally {
+                const prompt = encodeURIComponent(
+                    `You are an academic AI. Analyze these notes and:
+1. Check accuracy
+2. Correct mistakes  
+3. Improve clarity
+4. Give final improved version
+
+NOTES:
+${notes}`
+                );
+
+                const iframe = document.getElementById('deepseek-chat');
+
+                // Load AI with notes analysis prompt
+                iframe.src = `https://chat.deepseek.com?c=${prompt}`;
+
+                // 👇 Mode switch happens HERE (no recursion)
+                this.currentMode = 'general';
+                this.updateModeDisplay();
+                document.getElementById('notes-section').style.display = 'none';
+
+                this.showVerificationStatus(
+                    'AI loaded with your notes. Press Enter in chat to get results.',
+                    'success'
+                );
+
+                // Reset button
+                setTimeout(() => {
                     verifyBtn.disabled = false;
                     verifyBtn.textContent = '🔍 AI Verify Notes';
-                }
-            }
-
-            showAICorrections(accuracy, issues) {
-                const isHighAccuracy = accuracy > 90;
-                const corrections = isHighAccuracy ? `
-                    <div style="color: var(--accent-blue); font-weight: 700; margin-bottom: 1rem;">
-                        🎉 Excellent notes! <strong>${accuracy}% accurate</strong>
-                    </div>
-                    <div style="font-size: 0.95rem; line-height: 1.6;">
-                        ✅ All key concepts correct<br>
-                        ✅ Terminology perfect<br>
-                        ✅ Ready for exams! 📚<br><br>
-                        <em>Review these ${issues} minor points for perfection.</em>
-                    </div>
-                ` : `
-                    <div style="color: var(--accent-purple); font-weight: 700; margin-bottom: 1rem;">
-                        👍 Good notes! Improved to <strong>${accuracy}% accuracy</strong>
-                    </div>
-                    <ul style="font-size: 0.95rem; line-height: 1.6; margin: 0;">
-                        <li>🔧 Fixed ${issues} technical terms</li>
-                        <li>📝 Clarified ${issues} key concepts</li>
-                        <li>✅ Structure optimized</li>
-                    </ul>
-                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 0.9rem;">
-                        <strong>AI-Enhanced:</strong> Notes are now exam-ready! 🎯
-                    </div>
-                `;
-                document.getElementById('ai-corrections').innerHTML = corrections;
+                }, 2000);
             }
 
             showVerificationStatus(message, type) {
@@ -319,7 +284,6 @@
 
             clearNotes() {
                 document.getElementById('notes-input').value = '';
-                document.getElementById('verification-results').style.display = 'none';
                 document.getElementById('verification-status').style.display = 'none';
                 document.getElementById('notes-input').style.borderColor = 'var(--glass-border)';
             }
