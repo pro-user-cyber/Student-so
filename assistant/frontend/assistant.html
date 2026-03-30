@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - Student OS</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root {
+            --accent-pink: #ff6b9d;
+            --accent-purple: #a855f7;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+        }
+
+        .mode-toggle {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 2rem; 
+            flex-wrap: wrap; 
+            gap: 1rem;
+        }
+        .mode-buttons {
+            display: flex; 
+            background: rgba(255,255,255,0.1); 
+            border-radius: 25px; 
+            padding: 4px; 
+            gap: 4px;
+        }
+        .mode-btn {
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            min-height: auto;
+            flex: 1;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .mode-btn.active {
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
+        }
+        
+        /* ✅ CHAT WINDOW STYLES (matches your CSS) */
+        .chat-window {
+            height: 450px;
+            overflow-y: auto;
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            scrollbar-width: thin;
+        }
+        .message {
+            padding: 12px 18px;
+            border-radius: 20px;
+            max-width: 85%;
+            font-size: 0.95rem;
+            backdrop-filter: blur(10px);
+        }
+        .message.user {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            align-self: flex-end;
+            border-bottom-right-radius: 6px;
+        }
+        .message.assistant {
+            background: rgba(255,255,255,0.12);
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
+        }
+        .message-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .message-sender {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            font-weight: 600;
+        }
+        .message-text {
+            line-height: 1.5;
+        }
+        
+        .chat-input-group {
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+        }
+        #chatInput {
+            flex: 1;
+            min-height: 50px;
+            resize: vertical;
+        }
+        .notes-input-group {
+            display: flex; 
+            gap: 1rem; 
+            flex-wrap: wrap; 
+            align-items: end; 
+            margin-bottom: 1rem;
+        }
+        .notes-actions {
+            display: flex; 
+            flex-direction: column; 
+            gap: 0.75rem; 
+            min-width: 160px;
+        }
+        #notes-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        #notes-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+        .chat-header {
+            margin-bottom: 1rem; 
+            padding: 1rem; 
+            background: rgba(255,255,255,0.05); 
+            border-radius: 12px; 
+            border: 1px solid var(--glass-border);
+        }
+        .status {
+            display: none;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        @media (max-width: 768px) {
+            .chat-window { height: 350px; }
+            .chat-input-group, .notes-input-group { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="glass-panel" style="border-radius: 0 0 20px 20px; margin-bottom: 0;">
+        <div class="logo">Student OS</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="pomodoro.html">Pomodoro</a>
+            <a href="calculator.html">Calc</a>
+            <a href="assistant.html" class="active">AI</a>
+            <a href="search.html">Search</a>
+            <a href="storage.html">Storage</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Mode Toggle & Stats -->
+        <div class="glass-panel" style="margin-top: 2rem;">
+            <div class="mode-toggle">
+                <h1 style="font-size: 2.2rem; font-weight: 800; background: linear-gradient(90deg, var(--accent-pink), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0;">
+                    🤖 GPT-4o-mini AI Study Assistant
+                </h1>
+                <div>
+                    <span style="font-weight: 600; opacity: 0.9; margin-right: 1rem;">Mode:</span>
+                    <div class="mode-buttons">
+                        <button id="general-mode-btn" class="btn btn-primary mode-btn active">💬 Live Chat</button>
+                        <button id="notes-mode-btn" class="btn btn-secondary mode-btn">📝 Notes Helper</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div id="current-mode-display" style="font-size: 1.5rem; font-weight: 800; color: var(--accent-blue);">💬 Live Chat</div>
+                    <div id="mode-description" style="font-size: 0.9rem; opacity: 0.8;">Real-time academic Q&A powered by GPT-4o-mini</div>
+                </div>
+                <div class="stat-item">
+                    <div id="session-stats" style="font-size: 1.5rem; font-weight: 800; color: var(--accent-green);">🟢 Connected</div>
+                    <div style="font-size: 0.85rem; opacity: 0.7;" id="connection-status">Backend ready</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes Section -->
+        <div id="notes-section" class="glass-panel" style="display: none; margin-top: 2rem;">
+            <h3 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--accent-purple);">📚 AI Notes Analysis</h3>
+            <div class="notes-input-group">
+                <textarea 
+                    id="notes-input" 
+                    rows="6" 
+                    placeholder="Paste your lecture notes here... AI will analyze accuracy, suggest improvements, and create study cards"
+                ></textarea>
+                <div class="notes-actions">
+                    <button id="analyze-btn" class="btn btn-primary">🔍 Analyze Notes</button>
+                    <button id="clear-btn" class="btn btn-secondary">🗑️ Clear</button>
+                </div>
+            </div>
+            <div id="notes-status" class="status"></div>
+        </div>
+
+        <!-- ✅ CHAT SECTION (uses your backend) -->
+        <div class="glass-panel" style="margin-top: 2rem;">
+            <div class="chat-header">
+                <strong>💬 GPT-4o-mini Live Chat</strong> 
+                <span style="float: right; font-size: 0.9rem; opacity: 0.7;">
+                    Powered by OpenAI • localhost:3000
+                </span>
+            </div>
+            
+            <!-- ✅ Your chat elements with correct IDs -->
+            <div id="chatMessages" class="chat-window"></div>
+            
+            <form id="chatForm" class="chat-input-group">
+                <input 
+                    type="text" 
+                    id="chatInput" 
+                    class="form-input"
+                    placeholder="Ask about math, science, history, coding... (Enter to send)" 
+                    autocomplete="off"
+                >
+                <button type="submit" class="btn btn-primary">Send</button>
+            </form>
+            
+            <div id="chat-status" class="status"></div>
+        </div>
+    </div>
+
+    <!-- ✅ Your bulletproof JS -->
+    <script src="js/assistant/assistant.js"></script>
+    
+    <!-- ✅ Mode switching + Notes logic -->
+    <script>
+        class StudentOSAI {
+            constructor() {
+                this.currentMode = 'general';
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.updateModeDisplay();
+            }
+
+            bindEvents() {
+                document.getElementById('general-mode-btn').onclick = () => this.switchMode('general');
+                document.getElementById('notes-mode-btn').onclick = () => this.switchMode('notes');
+                document.getElementById('analyze-btn').onclick = () => this.analyzeNotes();
+                document.getElementById('clear-btn').onclick = () => this.clearNotes();
+            }
+
+            switchMode(mode) {
+                this.currentMode = mode;
+                
+                // Update buttons
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.classList.remove('btn-primary', 'active');
+                    btn.classList.add('btn-secondary');
+                });
+                document.getElementById(mode === 'general' ? 'general-mode-btn' : 'notes-mode-btn')
+                    .classList.add('btn-primary', 'active');
+                
+                // Show/hide sections
+                document.getElementById('notes-section').style.display = mode === 'notes' ? 'block' : 'none';
+                this.updateModeDisplay();
+            }
+
+            updateModeDisplay() {
+                const displays = {
+                    general: { title: '💬 Live Chat', desc: 'Real-time academic Q&A powered by GPT-4o-mini' },
+                    notes: { title: '📝 Notes Analysis', desc: 'AI reviews your notes for accuracy + improvements' }
+                };
+                
+                const display = displays[this.currentMode];
+                document.getElementById('current-mode-display').textContent = display.title;
+                document.getElementById('mode-description').textContent = display.desc;
+            }
+
+            async analyzeNotes() {
+                const notes = document.getElementById('notes-input').value.trim();
+                if (!notes) {
+                    this.showStatus('notes-status', 'Enter notes first!', 'error');
+                    return;
+                }
+
+                // ✅ Send notes to YOUR backend
+                const analyzeBtn = document.getElementById('analyze-btn');
+                const originalText = analyzeBtn.textContent;
+                
+                analyzeBtn.disabled = true;
+                analyzeBtn.textContent = '🤔 AI Analyzing...';
+
+                try {
+                    const response = await fetch('http://localhost:3000/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            message: `ANALYZE THESE NOTES:\n\n${notes}\n\nProvide: 1) Accuracy check 2) Corrections 3) Study tips 4) Key takeaways` 
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    this.showStatus('notes-status', '✅ Analysis complete! Check chat below 👇', 'success');
+                    
+                    // Switch to chat mode to show results
+                    this.switchMode('general');
+                    
+                    // Auto-scroll chat
+                    setTimeout(() => {
+                        const chatMessages = document.getElementById('chatMessages');
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }, 100);
+                    
+                } catch (error) {
+                    this.showStatus('notes-status', '❌ Connection failed', 'error');
+                } finally {
+                    analyzeBtn.disabled = false;
+                    analyzeBtn.textContent = originalText;
+                }
+            }
+
+            showStatus(elementId, message, type) {
+                const status = document.getElementById(elementId);
+                status.textContent = message;
+                status.style.display = 'block';
+                status.style.background = type === 'success' ? 'rgba(16,185,129,0.2)' : 
+                                        type === 'error' ? 'rgba(239,68,68,0.2)' : 'rgba(59,130,246,0.2)';
+                setTimeout(() => status.style.display = 'none', 4000);
+            }
+
+            clearNotes() {
+                document.getElementById('notes-input').value = '';
+                document.getElementById('notes-status').style.display = 'none';
+            }
+        }
+
+        // Initialize after DOM + your chat JS
+        document.addEventListener('DOMContentLoaded', () => {
+            new StudentOSAI();
+        });
+    </script>
+</body>
+</html>
