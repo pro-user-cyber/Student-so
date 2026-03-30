@@ -1,11 +1,27 @@
 (function() {
   'use strict';
 
-  // ✅ Wait for DOM + all functions defined BEFORE use
+  // 🔥 BULLETPROOF: No crashes, works everywhere
+  let API_BASE;
+  
+  try {
+    // GitHub Pages / Production
+    API_BASE = window.ENV?.API_URL;
+    
+    // Local fallback (no bundler check needed)
+    if (!API_BASE) API_BASE = 'http://localhost:3000';
+    
+    console.log('🔗 Using API:', API_BASE);
+  } catch (e) {
+    API_BASE = 'http://localhost:3000';
+    console.warn('⚠️ Config error, using localhost');
+  }
+
   function init() {
     const chatForm = document.getElementById('chatForm');
     const chatInput = document.getElementById('chatInput');
     const chatMessages = document.getElementById('chatMessages');
+    const sendButton = chatForm.querySelector('button');
 
     if (!chatForm || !chatInput || !chatMessages) {
       console.error('❌ Chat elements missing');
@@ -14,17 +30,37 @@
 
     let isSending = false;
 
-    // Bind events
+    // Auto-resize textarea
+    chatInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+      sendButton.disabled = !this.value.trim();
+    });
+
+    // Event listeners
     chatForm.addEventListener('submit', sendMessage);
     chatInput.addEventListener('keydown', handleEnter);
+
+    // Initial resize
+    chatInput.dispatchEvent(new Event('input'));
 
     // Test connection
     testConnection();
 
     function testConnection() {
-      fetch('http://localhost:3000/health', { cache: 'no-store' })
-        .then(res => res.ok ? console.log('✅ Backend OK') : console.warn('⚠️ Backend issue'))
-        .catch(() => console.warn('⚠️ No backend'));
+      fetch(`${API_BASE}/health`, { cache: 'no-store' })
+        .then(res => {
+          if (res.ok) {
+            console.log('✅ Backend connected:', API_BASE);
+            appendMessage('assistant', '🚀 Connected! Ready to help.');
+          } else {
+            console.warn('⚠️ Backend issue:', res.status);
+          }
+        })
+        .catch(err => {
+          console.warn('⚠️ Backend unreachable:', err);
+          appendMessage('assistant', '⚠️ Offline - connect backend for AI');
+        });
     }
 
     async function sendMessage(e) {
@@ -37,16 +73,17 @@
       // User message
       appendMessage('user', message);
       chatInput.value = '';
-      chatInput.focus();
+      chatInput.style.height = 'auto';
+      sendButton.disabled = true;
       isSending = true;
 
       const thinkingId = appendThinking();
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const response = await fetch('http://localhost:3000/api/chat', {
+        const response = await fetch(`${API_BASE}/api/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message }),
@@ -55,14 +92,13 @@
 
         clearTimeout(timeoutId);
 
-        // ✅ Safe JSON with fallback
         const text = await response.text();
         let data;
         
         try {
           data = JSON.parse(text);
         } catch {
-          throw new Error('Invalid JSON from server');
+          throw new Error('Invalid JSON');
         }
 
         removeElement(thinkingId);
@@ -70,27 +106,29 @@
         if (response.ok && data?.reply) {
           appendMessage('assistant', data.reply);
         } else {
-          appendMessage('assistant', `❌ ${data?.error || 'Server error'}`);
+          appendMessage('assistant', `❌ ${data?.error || 'Error ' + response.status}`);
         }
       } catch (error) {
         console.error('Request failed:', error);
         removeElement(thinkingId);
         
-        const errorMsg = error.name === 'AbortError' 
-          ? 'Timeout (10s)' 
-          : error.message.includes('fetch') 
-          ? 'Server offline' 
-          : 'Connection error';
+        let errorMsg;
+        if (error.name === 'AbortError') errorMsg = '⏰ Timeout';
+        else if (error.message.includes('fetch') || error.message.includes('Failed')) 
+          errorMsg = `🌐 Network - Check ${API_BASE}`;
+        else errorMsg = error.message;
           
         appendMessage('assistant', `❌ ${errorMsg}`);
       } finally {
         isSending = false;
+        sendButton.disabled = !chatInput.value.trim();
       }
     }
 
     function handleEnter(e) {
       if (e.key === 'Enter' && !e.shiftKey) {
-        sendMessage(e);
+        e.preventDefault();
+        if (!isSending) chatForm.requestSubmit();
       }
     }
 
@@ -137,7 +175,6 @@
     }
   }
 
-  // ✅ Safe DOM ready detection
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
