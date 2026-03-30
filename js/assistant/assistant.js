@@ -1,36 +1,27 @@
 (function() {
   'use strict';
 
-  // 🔥 BULLETPROOF: No crashes, works everywhere
-  let API_BASE;
-  
-  try {
-    // GitHub Pages / Production
-    API_BASE = window.ENV?.API_URL;
-    
-    // Local fallback (no bundler check needed)
-    if (!API_BASE) API_BASE = 'http://localhost:3000';
-    
-    console.log('🔗 Using API:', API_BASE);
-  } catch (e) {
-    API_BASE = 'http://localhost:3000';
-    console.warn('⚠️ Config error, using localhost');
-  }
+  // 🔥 BULLETPROOF API CONFIG - Works everywhere
+  const API_BASE = window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : 'https://student-so.onrender.com';
+
+  console.log('🔗 API:', API_BASE);
 
   function init() {
     const chatForm = document.getElementById('chatForm');
     const chatInput = document.getElementById('chatInput');
     const chatMessages = document.getElementById('chatMessages');
-    const sendButton = chatForm.querySelector('button');
+    const sendButton = chatForm?.querySelector('button');
 
     if (!chatForm || !chatInput || !chatMessages) {
-      console.error('❌ Chat elements missing');
+      console.error('❌ Missing chat elements');
       return;
     }
 
     let isSending = false;
 
-    // Auto-resize textarea
+    // Auto-resize textarea + send button state
     chatInput.addEventListener('input', function() {
       this.style.height = 'auto';
       this.style.height = Math.min(this.scrollHeight, 120) + 'px';
@@ -41,26 +32,17 @@
     chatForm.addEventListener('submit', sendMessage);
     chatInput.addEventListener('keydown', handleEnter);
 
-    // Initial resize
+    // Initial setup
     chatInput.dispatchEvent(new Event('input'));
-
-    // Test connection
     testConnection();
-
+    
     function testConnection() {
       fetch(`${API_BASE}/health`, { cache: 'no-store' })
-        .then(res => {
-          if (res.ok) {
-            console.log('✅ Backend connected:', API_BASE);
-            appendMessage('assistant', '🚀 Connected! Ready to help.');
-          } else {
-            console.warn('⚠️ Backend issue:', res.status);
-          }
-        })
-        .catch(err => {
-          console.warn('⚠️ Backend unreachable:', err);
-          appendMessage('assistant', '⚠️ Offline - connect backend for AI');
-        });
+        .then(res => res.ok ? 
+          appendMessage('assistant', '🚀 Connected! Ready to chat.') : 
+          console.warn('⚠️ Backend issue:', res.status)
+        )
+        .catch(() => appendMessage('assistant', '⚠️ Offline mode'));
     }
 
     async function sendMessage(e) {
@@ -70,7 +52,7 @@
       const message = chatInput.value.trim();
       if (!message) return;
 
-      // User message
+      // Add user message
       appendMessage('user', message);
       chatInput.value = '';
       chatInput.style.height = 'auto';
@@ -92,31 +74,21 @@
 
         clearTimeout(timeoutId);
 
-        const text = await response.text();
-        let data;
-        
-        try {
-          data = JSON.parse(text);
-        } catch {
-          throw new Error('Invalid JSON');
-        }
-
+        const data = await response.json();
         removeElement(thinkingId);
 
         if (response.ok && data?.reply) {
           appendMessage('assistant', data.reply);
         } else {
-          appendMessage('assistant', `❌ ${data?.error || 'Error ' + response.status}`);
+          appendMessage('assistant', `❌ ${data?.error || 'Server error'}`);
         }
       } catch (error) {
         console.error('Request failed:', error);
         removeElement(thinkingId);
         
-        let errorMsg;
-        if (error.name === 'AbortError') errorMsg = '⏰ Timeout';
-        else if (error.message.includes('fetch') || error.message.includes('Failed')) 
-          errorMsg = `🌐 Network - Check ${API_BASE}`;
-        else errorMsg = error.message;
+        const errorMsg = error.name === 'AbortError' 
+          ? '⏰ Request timeout' 
+          : `🌐 Network error - ${API_BASE}`;
           
         appendMessage('assistant', `❌ ${errorMsg}`);
       } finally {
@@ -139,7 +111,7 @@
     }
 
     function appendThinking() {
-      const id = `thinking-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const id = `thinking-${Date.now()}`;
       const div = createMessageEl('assistant', '🤔 Thinking...');
       div.id = id;
       chatMessages.appendChild(div);
@@ -175,6 +147,7 @@
     }
   }
 
+  // Initialize when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
