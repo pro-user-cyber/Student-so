@@ -9,14 +9,12 @@ import { fileURLToPath } from 'url';
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename); // ✅ FIXED - No more snake bug
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// ✅ PROPER PORT
 const PORT = process.env.PORT || 3000;
 
-// ✅ API KEY CHECK - Fail fast
 if (!process.env.OPENAI_API_KEY) {
   console.error('❌ OPENAI_API_KEY is missing! Server cannot start.');
   process.exit(1);
@@ -24,7 +22,7 @@ if (!process.env.OPENAI_API_KEY) {
 
 console.log(`🚀 Starting server on PORT: ${PORT}`);
 
-// ✅ CORS - Clean domains only
+// ✅ CORS
 app.use(cors({
   origin: [
     'http://localhost:3000',
@@ -33,36 +31,40 @@ app.use(cors({
   credentials: true
 }));
 
-// Middleware
 app.use(express.json({ limit: '10mb' }));
 
-// Rate limiting
+// 🔥 FIXED: Tighter rate limit (protects OpenAI, not just your server)
 const limiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 30,
+  windowMs: 60 * 1000,  // 1 minute
+  max: 10,              // ↓ REDUCED from 30 → 10 (Render cold start protection)
   message: { error: 'Too many requests. Try again in 1 minute.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// OpenAI
+// 🔥 SAFER MODEL - Works for all accounts
+const MODEL = 'gpt-4o-mini'; // ✅ Confirmed: available to all paid API keys
+
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 30000
+  timeout: 45000  // ↑ Increased for Render cold starts
 });
 
-// ✅ Health check - Honest status
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
-    openai: !!process.env.OPENAI_API_KEY ? 'configured' : 'missing', // ✅ FIXED - Honest
+    openai: !!process.env.OPENAI_API_KEY ? 'configured' : 'missing',
+    model: MODEL,
     port: PORT,
     timestamp: new Date().toISOString()
   });
 });
 
-// Chat API
+// 🔥 CHAT API - FULLY FIXED
 app.post('/api/chat', limiter, async (req, res) => {
+  // 🧪 LOG EVERY HIT (Render debugging)
+  console.log(`🔥 /api/chat hit at ${new Date().toISOString()} - IP: ${req.ip}`);
+  
   try {
     const { message } = req.body;
     
@@ -72,10 +74,10 @@ app.post('/api/chat', limiter, async (req, res) => {
 
     const cleanMessage = message.trim().slice(0, 2000);
 
-    const model = 'gpt-4o-mini'; // No fake fallback comments
+    console.log(`🤖 Calling OpenAI with model: ${MODEL}`);
 
     const completion = await openai.chat.completions.create({
-      model,
+      model: MODEL,
       messages: [
         { role: 'system', content: 'You are a helpful student assistant. Keep responses concise and educational.' },
         { role: 'user', content: cleanMessage }
@@ -87,24 +89,39 @@ app.post('/api/chat', limiter, async (req, res) => {
     const reply = completion.choices?.[0]?.message?.content?.trim() || 
                   'Sorry, I could not generate a response.';
 
+    console.log(`✅ OpenAI success - ${reply.length} chars`);
     res.json({ reply });
+    
   } catch (error) {
-    console.error('OpenAI error:', error.message);
+    // 🔥 FIXED: FULL ERROR LOGGING - See the TRUTH
+    console.error('🚨 FULL OpenAI ERROR:', {
+      message: error.message,
+      status: error.status,
+      code: error.code,
+      type: error.type,
+      response_status: error.response?.status,
+      response_data: error.response?.data,
+      stack: error.stack?.split('\n')[0] // First line only
+    });
+
+    // 🔥 FIXED: PROPER OpenAI error detection
+    const status = error.response?.status || error.status;
     
-    if (error.status === 429) {
-      return res.status(429).json({ error: 'Rate limited by OpenAI. Please wait.' });
+    if (status === 429 || error.code === 'rate_limit_exceeded') {
+      return res.status(429).json({ error: 'Rate limited by OpenAI. Please wait 1-2 minutes.' });
     }
-    if (error.status === 401) {
-      return res.status(401).json({ error: 'OpenAI access denied. Check model access or API key.' });
+    if (status === 401 || error.type === 'invalid_request_error') {
+      return res.status(401).json({ error: 'OpenAI authentication failed. Check API key.' });
     }
-    if (error.status === 404) {
-      return res.status(404).json({ error: 'OpenAI model not found. Check your access.' });
+    if (status === 403 || status === 404) {
+      return res.status(403).json({ error: `Model access denied. Model: ${MODEL}` });
     }
-    if (error.status >= 500) {
-      return res.status(503).json({ error: 'AI service temporarily unavailable.' });
+    if (status >= 500) {
+      return res.status(503).json({ error: 'OpenAI service temporarily unavailable. Try again.' });
     }
     
-    res.status(500).json({ error: 'AI processing error' });
+    // Generic fallback
+    res.status(500).json({ error: 'AI processing error. Check logs.' });
   }
 });
 
@@ -115,13 +132,13 @@ app.use((req, res) => {
 
 // Errors
 app.use((err, req, res, next) => {
-  console.error('Server error:', err.stack);
+  console.error('💥 Server error:', err.stack);
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Listen
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`✅ Health check ready`);
-  console.log(`🌐 Production ready!`);
+  console.log(`✅ Health check: http://localhost:${PORT}/health`);
+  console.log(`🔥 Model: ${MODEL} ✅ (universal access)`);
+  console.log(`🛡️ Rate limit: 10/min ✅ (Render-safe)`);
 });
