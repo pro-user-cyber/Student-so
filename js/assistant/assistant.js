@@ -25,7 +25,7 @@
     chatInput.addEventListener('input', function() {
       this.style.height = 'auto';
       this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-      sendButton.disabled = !this.value.trim();
+      sendButton.disabled = !this.value.trim() || isSending; // ✅ FIXED: respect isSending
     });
 
     // Event listeners
@@ -47,7 +47,12 @@
 
     async function sendMessage(e) {
       e.preventDefault();
-      if (isSending) return;
+      
+      // ✅ FIXED: HARD BLOCK + LOG
+      if (isSending) {
+        console.log("🚫 Blocked duplicate request");
+        return;
+      }
 
       const message = chatInput.value.trim();
       if (!message) return;
@@ -56,14 +61,21 @@
       appendMessage('user', message);
       chatInput.value = '';
       chatInput.style.height = 'auto';
+      
+      // ✅ FIXED: TOTAL LOCKDOWN
       sendButton.disabled = true;
+      chatInput.disabled = true;  // 🔥 CRITICAL: Block keyboard spam
       isSending = true;
 
       const thinkingId = appendThinking();
 
       try {
+        // ✅ FIXED: LOG EVERY SEND
+        console.log(`📤 Sending request: ${Date.now()} - "${message.slice(0, 50)}..."`);
+
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        // ✅ FIXED: 30s TIMEOUT (Render-safe)
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
         const response = await fetch(`${API_BASE}/api/chat`, {
           method: 'POST',
@@ -79,28 +91,35 @@
 
         if (response.ok && data?.reply) {
           appendMessage('assistant', data.reply);
+          console.log(`✅ Response received: ${Date.now()}`);
         } else {
           appendMessage('assistant', `❌ ${data?.error || 'Server error'}`);
         }
       } catch (error) {
-        console.error('Request failed:', error);
+        console.error('🚨 Request failed:', error);
         removeElement(thinkingId);
         
         const errorMsg = error.name === 'AbortError' 
-          ? '⏰ Request timeout' 
-          : `🌐 Network error - ${API_BASE}`;
+          ? '⏰ Request timeout (30s)' 
+          : `🌐 Network error`;
           
         appendMessage('assistant', `❌ ${errorMsg}`);
       } finally {
+        // ✅ FIXED: PROPER UNLOCK
         isSending = false;
         sendButton.disabled = !chatInput.value.trim();
+        chatInput.disabled = false;  // 🔥 CRITICAL: Re-enable input
+        chatInput.focus();           // UX bonus
       }
     }
 
     function handleEnter(e) {
+      // ✅ FIXED: Respect input disabled state
+      if (chatInput.disabled || isSending) return;
+      
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        if (!isSending) chatForm.requestSubmit();
+        chatForm.requestSubmit();
       }
     }
 
