@@ -41,14 +41,15 @@
             border: none;
             cursor: pointer;
             transition: all 0.3s;
+            background: transparent;
+            color: var(--text-secondary);
         }
-        .mode-btn.active {
+        .mode-btn.active, .mode-btn:hover {
             background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
             color: white;
             box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
         }
         
-        /* ✅ CHAT WINDOW STYLES (matches your CSS) */
         .chat-window {
             height: 450px;
             overflow-y: auto;
@@ -68,6 +69,11 @@
             max-width: 85%;
             font-size: 0.95rem;
             backdrop-filter: blur(10px);
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .message.user {
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
@@ -102,6 +108,15 @@
             flex: 1;
             min-height: 50px;
             resize: vertical;
+            background: rgba(255,255,255,0.08);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            padding: 1rem;
+        }
+        #chatInput:focus {
+            outline: none;
+            border-color: var(--accent-blue);
         }
         .notes-input-group {
             display: flex; 
@@ -177,8 +192,8 @@
                 <div>
                     <span style="font-weight: 600; opacity: 0.9; margin-right: 1rem;">Mode:</span>
                     <div class="mode-buttons">
-                        <button id="general-mode-btn" class="btn btn-primary mode-btn active">💬 Live Chat</button>
-                        <button id="notes-mode-btn" class="btn btn-secondary mode-btn">📝 Notes Helper</button>
+                        <button id="general-mode-btn" class="mode-btn active">💬 Live Chat</button>
+                        <button id="notes-mode-btn" class="mode-btn">📝 Notes Helper</button>
                     </div>
                 </div>
             </div>
@@ -212,16 +227,15 @@
             <div id="notes-status" class="status"></div>
         </div>
 
-        <!-- ✅ CHAT SECTION (uses your backend) -->
+        <!-- Chat Section -->
         <div class="glass-panel" style="margin-top: 2rem;">
             <div class="chat-header">
                 <strong>💬 GPT-4o-mini Live Chat</strong> 
                 <span style="float: right; font-size: 0.9rem; opacity: 0.7;">
-                    Powered by OpenAI • localhost:3000
+                    Powered by OpenAI • <span id="backend-url">student-so.onrender.com</span>
                 </span>
             </div>
             
-            <!-- ✅ Your chat elements with correct IDs -->
             <div id="chatMessages" class="chat-window"></div>
             
             <form id="chatForm" class="chat-input-group">
@@ -239,11 +253,18 @@
         </div>
     </div>
 
-    <!-- ✅ Your bulletproof JS -->
+    <!-- ✅ BULLETPROOF ASSISTANT JS -->
     <script src="js/assistant/assistant.js"></script>
     
-    <!-- ✅ Mode switching + Notes logic -->
+    <!-- ✅ MODE SWITCHING + NOTES LOGIC -->
     <script>
+        // 🔥 GLOBAL API CONFIG - SHARED WITH assistant.js
+        window.API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000'
+            : 'https://student-so.onrender.com';
+
+        document.getElementById('backend-url').textContent = window.API_BASE.replace(/https?:\/\//, '');
+
         class StudentOSAI {
             constructor() {
                 this.currentMode = 'general';
@@ -267,11 +288,10 @@
                 
                 // Update buttons
                 document.querySelectorAll('.mode-btn').forEach(btn => {
-                    btn.classList.remove('btn-primary', 'active');
-                    btn.classList.add('btn-secondary');
+                    btn.classList.remove('active');
                 });
                 document.getElementById(mode === 'general' ? 'general-mode-btn' : 'notes-mode-btn')
-                    .classList.add('btn-primary', 'active');
+                    .classList.add('active');
                 
                 // Show/hide sections
                 document.getElementById('notes-section').style.display = mode === 'notes' ? 'block' : 'none';
@@ -292,41 +312,63 @@
             async analyzeNotes() {
                 const notes = document.getElementById('notes-input').value.trim();
                 if (!notes) {
-                    this.showStatus('notes-status', 'Enter notes first!', 'error');
+                    this.showStatus('notes-status', '👆 Enter notes first!', 'error');
                     return;
                 }
 
-                // ✅ Send notes to YOUR backend
                 const analyzeBtn = document.getElementById('analyze-btn');
                 const originalText = analyzeBtn.textContent;
                 
                 analyzeBtn.disabled = true;
-                analyzeBtn.textContent = '🤔 AI Analyzing...';
+                analyzeBtn.innerHTML = '🤔 <span>AI Analyzing...</span>';
 
                 try {
-                    const response = await fetch('http://localhost:3000/api/chat', {
+                    this.showStatus('notes-status', '🔄 Sending to GPT-4o-mini...', 'info');
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+                    const response = await fetch(`${window.API_BASE}/api/chat`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
-                            message: `ANALYZE THESE NOTES:\n\n${notes}\n\nProvide: 1) Accuracy check 2) Corrections 3) Study tips 4) Key takeaways` 
-                        })
+                            message: `📚 STUDENT NOTES ANALYSIS MODE:
+
+NOTES:
+${notes}
+
+Please provide a structured analysis:
+1️⃣ **ACCURACY**: Correct/incorrect parts
+2️⃣ **CORRECTIONS**: Fix errors
+3️⃣ **KEY TAKEAWAYS**: 3-5 bullets
+4️⃣ **STUDY TIPS**: Memory techniques
+5️⃣ **REVIEW QUESTIONS**: 3 test questions
+
+Format as markdown for clarity.`
+                        }),
+                        signal: controller.signal
                     });
 
+                    clearTimeout(timeoutId);
                     const data = await response.json();
                     
-                    this.showStatus('notes-status', '✅ Analysis complete! Check chat below 👇', 'success');
+                    // ✅ DISPLAY IN CHAT - Uses global addMessage from assistant.js
+                    this.showStatus('notes-status', '✅ Analysis complete! 👇', 'success');
                     
-                    // Switch to chat mode to show results
                     this.switchMode('general');
                     
-                    // Auto-scroll chat
+                    // 🔥 CRITICAL: Actually show response
                     setTimeout(() => {
+                        window.addMessage?.('assistant', data.reply || data.response || data.message || 'Analysis ready!');
+                        
                         const chatMessages = document.getElementById('chatMessages');
                         chatMessages.scrollTop = chatMessages.scrollHeight;
                     }, 100);
                     
                 } catch (error) {
-                    this.showStatus('notes-status', '❌ Connection failed', 'error');
+                    console.error('Notes analysis error:', error);
+                    const errorMsg = error.name === 'AbortError' ? '⏰ Analysis timeout (30s)' : '🌐 Connection failed';
+                    this.showStatus('notes-status', `❌ ${errorMsg}`, 'error');
                 } finally {
                     analyzeBtn.disabled = false;
                     analyzeBtn.textContent = originalText;
@@ -338,8 +380,12 @@
                 status.textContent = message;
                 status.style.display = 'block';
                 status.style.background = type === 'success' ? 'rgba(16,185,129,0.2)' : 
-                                        type === 'error' ? 'rgba(239,68,68,0.2)' : 'rgba(59,130,246,0.2)';
-                setTimeout(() => status.style.display = 'none', 4000);
+                                        type === 'error' ? 'rgba(239,68,68,0.2)' : 
+                                        'rgba(59,130,246,0.2)';
+                status.style.color = type === 'success' ? '#10b981' : 
+                                   type === 'error' ? '#ef4444' : 
+                                   '#3b82f6';
+                setTimeout(() => status.style.display = 'none', 5000);
             }
 
             clearNotes() {
@@ -348,7 +394,7 @@
             }
         }
 
-        // Initialize after DOM + your chat JS
+        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             new StudentOSAI();
         });
