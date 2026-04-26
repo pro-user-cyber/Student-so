@@ -12,145 +12,185 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-
 const PORT = process.env.PORT || 3000;
 
-if (!process.env.HF_TOKEN) {
-  console.error('❌ HF_TOKEN is missing! Server cannot start.');
+// 🔥 HF_TOKEN REQUIRED
+const HF_TOKEN = process.env.HF_TOKEN?.trim();
+if (!HF_TOKEN) {
+  console.error('❌ HF_TOKEN missing - Add to Render dashboard');
   process.exit(1);
 }
 
-console.log(`🚀 Starting server on PORT: ${PORT}`);
+console.log('✅ HF_TOKEN OK');
 
-// ✅ CORS
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://pro-user-cyber.github.io'
-  ],
-  credentials: true
-}));
-
+// ✅ Middleware
+app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// 🔥 Rate limit
 const limiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 10,
-  message: { error: 'Too many requests. Try again in 1 minute.' },
+  max: 25,
+  message: { error: '⏳ 25 requests/minute max' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// 🔥 MODEL
 const MODEL = 'HuggingFaceH4/zephyr-7b-beta';
 
-// ✅ Client
 const client = new OpenAI({
   baseURL: "https://router.huggingface.co/v1",
-  apiKey: process.env.HF_TOKEN,
-  timeout: 45000
+  apiKey: HF_TOKEN,
+  timeout: 60000  // ✅ STEP 3 - HF needs time
 });
 
+console.log(`🤖 Model: ${MODEL}`);
+
+// 🔥 HEALTH CHECK
 app.get('/health', (req, res) => {
   res.json({ 
-    status: 'OK', 
-    huggingface: !!process.env.HF_TOKEN ? 'configured' : 'missing',
+    status: 'OK',
     model: MODEL,
-    port: PORT,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
   });
 });
 
-// 🔥 CHAT API - FLAWLESS
+// 🔥 CHAT API - BATTLE TESTED
 app.post('/api/chat', limiter, async (req, res) => {
-  console.log(`🔥 /api/chat hit at ${new Date().toISOString()} - IP: ${req.ip}`);
+  const startTime = Date.now();
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  
+  console.log(`🔥 [${requestId}] "${req.body.message?.slice(0, 50)}..."`);
   
   try {
     const { message } = req.body;
     
     if (!message?.trim()) {
+      console.log(`❌ [${requestId}] Empty message`);
       return res.status(400).json({ error: 'Message required' });
     }
 
-    const cleanMessage = message.trim().slice(0, 2000);
+    const cleanMessage = message.trim().slice(0, 3000);
 
-    console.log(`🤖 Processing: ${MODEL}`);
-
-    // 🔥 Render cold start protection
-    if (process.env.RENDER) {
-      await new Promise(r => setTimeout(r, 300));
+    // Render cold start
+    if (process.env.RENDER && process.uptime() < 10) {
+      console.log(`💤 [${requestId}] Cold start delay`);
+      await new Promise(r => setTimeout(r, 800));
     }
 
-    const completion = await client.chat.completions.create({
-      model: MODEL,
-      messages: [
-        { role: 'system', content: 'You are a helpful student assistant. Keep responses concise and educational.' },
-        { role: 'user', content: cleanMessage }
-      ],
-      max_tokens: 400,
-      temperature: 0.7,
-      extra_body: {
-        options: { wait_for_model: true }
-      }
-    });
+    // ✅ STEP 4 - RETRY LOGIC
+    let completion;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        console.log(`🤖 [${requestId}] Attempt ${attempt}/2`);
+        
+        completion = await client.chat.completions.create({
+          model: MODEL,
+          messages: [
+            {
+              role: 'system',
+              content: `StudentOS AI Study Assistant
 
-    // 🔥 ATOMIC CLEANING (no collateral damage)
-    let reply = completion?.choices?.[0]?.message?.content;
+Answer concisely with:
+- Bullet points
+- Educational emojis  
+- Clear explanations
+
+Max 400 words.`
+            },
+            { role: 'user', content: cleanMessage }
+          ],
+          max_tokens: 800,
+          temperature: 0.3
+        });
+        
+        console.log(`✅ [${requestId}] Success on attempt ${attempt}`);
+        break;
+        
+      } catch (attemptError) {
+        console.warn(`⚠️ [${requestId}] Attempt ${attempt} failed:`, attemptError.message);
+        
+        if (attempt === 2) {
+          throw attemptError;  // Final attempt failed
+        }
+        
+        // Wait before retry
+        await new Promise(r => setTimeout(r, 1500));
+      }
+    }
+
+    const replyRaw = completion?.choices?.[0]?.message?.content?.trim();
     
-    if (!reply || reply.trim().length === 0) {
-      reply = "⚠️ Model returned empty response. Try again.";
-      console.log('⚠️ Empty - fallback');
-    } else {
-      // ✅ MICROSCOPIC FIX: Line-start only for Assistant
-      reply = reply
-        .replace(/^User:.*?\n/gi, '')              // Line-start User:
-        .replace(/^Assistant:?\s*/gi, '')          // 👈 FIXED: Line-start Assistant:
-        .replace(/User:\s*$/gi, '')                // Trailing User:
-        .replace(/^\n+|\n+$/g, '')                 // Newlines
-        .trim();
-      
-      if (reply.length === 0) {
-        reply = "⚠️ Malformed response. Try again.";
-      }
+    if (!replyRaw) {
+      throw new Error('Empty response from model');
     }
 
-    console.log(`✅ Success - ${reply.length} chars`);
+    // Minimal cleaning
+    const reply = replyRaw
+      .replace(/^Assistant:\s*/i, '')
+      .replace(/^AI:\s*/i, '')
+      .trim();
+
+    const duration = Date.now() - startTime;
+    console.log(`✅ [${requestId}] COMPLETE ${duration}ms - ${reply.length} chars`);
+
     res.json({ reply });
-    
+
   } catch (error) {
-    console.error('🚨 ERROR:', {
+    const duration = Date.now() - startTime;
+    
+    // ✅ STEP 1 - FULL ERROR LOGGING
+    console.error(`💥 [${requestId}] FAILED ${duration}ms:`, {
       message: error.message,
-      status: error.status,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
       code: error.code,
-      response_status: error.response?.status
+      name: error.name
     });
 
-    const status = error.response?.status || error.status;
-    
-    if (status === 429) return res.status(429).json({ error: 'Rate limited. Wait.' });
-    if (status === 401) return res.status(401).json({ error: 'Auth failed. Check HF_TOKEN.' });
-    if (status === 403 || status === 404) return res.status(403).json({ error: `Model denied: ${MODEL}` });
-    if (status >= 500) return res.status(503).json({ error: 'Service unavailable.' });
-    
-    res.status(500).json({ error: 'AI error.' });
+    // ✅ STEP 2 - FRIENDLY FALLBACKS
+    let userError = '🤖 AI is taking a break. Try again in 10 seconds.';
+    let statusCode = 500;
+
+    if (error.message.includes('timeout') || error.message.includes('ETIMEDOUT')) {
+      userError = '⏳ Model loading (HF free tier). Try again.';
+      statusCode = 503;
+    } else if (error.response?.status === 429) {
+      userError = '⏳ Rate limited by HuggingFace.';
+      statusCode = 429;
+    } else if (error.response?.status === 401 || error.response?.status === 403) {
+      userError = '🔑 Service authentication issue.';
+      statusCode = 503;
+    }
+
+    res.status(statusCode).json({ error: userError });
   }
 });
 
-// 404
-app.use((req, res) => {
+// 🔥 404
+app.use('*', (req, res) => {
+  console.log(`🚫 404: ${req.method} ${req.originalUrl}`);
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
-// Errors
+// 🔥 Global errors
 app.use((err, req, res, next) => {
-  console.error('💥 Server error:', err.stack);
-  res.status(500).json({ error: 'Internal server error' });
+  console.error('💥 UNHANDLED ERROR:', {
+    url: req.originalUrl,
+    method: req.method,
+    stack: err.stack
+  });
+  res.status(500).json({ error: 'Server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server on port ${PORT}`);
-  console.log(`✅ Health: http://localhost:${PORT}/health`);
-  console.log(`🔥 Model: ${MODEL}`);
-  console.log(`✅ All edge cases handled`);
+// 🔥 Startup
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('\n🚀 StudentOS Backend v2.0');
+  console.log(`📍  http://localhost:${PORT}`);
+  console.log(`🔍  http://localhost:${PORT}/health`);
+  console.log(`💬  POST /api/chat`);
+  console.log(`⏱️   Timeout: 60s`);
+  console.log(`🔄   Retries: 2x`);
+  console.log(`✅   LIVE\n`);
 });
