@@ -1,3 +1,6 @@
+// assistant.js - AI Study Assistant for Student OS
+// Compatible with https://pro-user-cyber.github.io/Student-so
+// Fixed version with retry logic, timeout, and cache handling
 
 import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm@0.2.6";
 
@@ -6,6 +9,7 @@ let engine = null;
 let isReady = false;
 let currentMode = 'general';
 let messageCount = 0;
+let modelName = "Phi-3-mini-instruct-q4f16_1-MLC"; // Smaller model for faster loading
 
 // DOM Elements
 const chatMessages = document.getElementById('chatMessages');
@@ -15,6 +19,7 @@ const sendBtn = document.getElementById('sendBtn');
 const notesInput = document.getElementById('notes-input');
 const notesBtn = document.getElementById('analyze-btn');
 const clearBtn = document.getElementById('clear-btn');
+const resetBtn = document.getElementById('reset-btn');
 const chatStatus = document.getElementById('chat-status');
 const notesStatus = document.getElementById('notes-status');
 const notesResults = document.getElementById('notes-results');
@@ -93,13 +98,76 @@ function switchMode(mode) {
     }
 }
 
-// Initialize AI Model
-async function initAI() {
+// Check WebGPU support
+function checkWebGPUSupport() {
+    if (!navigator.gpu) {
+        return { supported: false, message: "WebGPU not supported. Use Chrome 113+ or Edge 113+." };
+    }
+    return { supported: true, message: "WebGPU supported" };
+}
+
+// Clear model cache
+async function clearModelCache() {
+    try {
+        // Delete IndexedDB databases used by MLC
+        const databases = await indexedDB.databases();
+        for (const db of databases) {
+            if (db.name && db.name.includes('mlc')) {
+                indexedDB.deleteDatabase(db.name);
+            }
+        }
+        console.log("Model cache cleared");
+        return true;
+    } catch (error) {
+        console.error("Error clearing cache:", error);
+        return false;
+    }
+}
+
+// Reset AI - clear cache and reload
+async function resetAI() {
+    showStatus('chat-status', '🗑️ Clearing cache...', 'loading');
+    
+    await clearModelCache();
+    
+    if (sessionStats) {
+        sessionStats.textContent = '🔄 Reloading...';
+    }
+    
+    // Small delay then reload
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+}
+
+// Initialize AI Model with Retry Logic
+async function initAI(retries = 3, delay = 3000) {
+    // First check WebGPU support
+    const webgpu = checkWebGPUSupport();
+    if (!webgpu.supported) {
+        showStatus('chat-status', '❌ ' + webgpu.message, 'error');
+        if (connectionStatus) connectionStatus.textContent = webgpu.message;
+        if (sessionStats) {
+            sessionStats.textContent = '❌ Error';
+            sessionStats.style.color = '#ef4444';
+        }
+        return;
+    }
+
     showStatus('chat-status', '🔄 Downloading AI model (30-80MB)...', 'loading');
 
     try {
+        // Create AbortController for timeout
+        const controller = new AbortController();
+        
+        // Set timeout (90 seconds)
+        const timeoutId = setTimeout(() => {
+            controller.abort();
+            console.log("Download timed out");
+        }, 90000);
+
         engine = await CreateMLCEngine(
-            "Phi-3.5-mini-instruct-q4f16_1-MLC",
+            modelName,
             {
                 initProgressCallback: (progress) => {
                     const percent = (progress * 100).toFixed(0);
@@ -109,11 +177,15 @@ async function initAI() {
                     }
                     if (connectionStatus) connectionStatus.textContent = 'Downloading model...';
                     showStatus('chat-status', `🔄 Loading AI: ${percent}%`, 'loading');
-                }
+                },
+                // Pass signal for abort capability (if supported by version)
+                ...(controller.signal ? { signal: controller.signal } : {})
             }
         );
 
+        clearTimeout(timeoutId);
         isReady = true;
+        
         if (sessionStats) {
             sessionStats.textContent = '🟢 Ready';
             sessionStats.style.color = '#10b981';
@@ -128,12 +200,31 @@ async function initAI() {
 
     } catch (error) {
         console.error('AI Init Error:', error);
-        if (sessionStats) {
-            sessionStats.textContent = '❌ Error';
-            sessionStats.style.color = '#ef4444';
+        
+        if (retries > 0) {
+            const errorMsg = error.message || 'Unknown error';
+            showStatus('chat-status', `⚠️ ${errorMsg}. Retrying in ${delay/1000}s... (${retries} left)`, 'error');
+            
+            if (sessionStats) {
+                sessionStats.textContent = '⚠️ Retrying...';
+                sessionStats.style.color = '#f59e0b';
+            }
+            
+            setTimeout(() => {
+                initAI(retries - 1, delay);
+            }, delay);
+        } else {
+            // All retries exhausted
+            if (sessionStats) {
+                sessionStats.textContent = '❌ Error';
+                sessionStats.style.color = '#ef4444';
+            }
+            if (connectionStatus) connectionStatus.textContent = error.message;
+            showStatus('chat-status', '❌ Failed to load AI after multiple attempts. Try clicking Reset AI.', 'error');
+            
+            // Offer manual retry button
+            addMessage('assistant', '⚠️ I had trouble loading. Please try clicking "Reset AI" to clear the cache and reload, or refresh the page.');
         }
-        if (connectionStatus) connectionStatus.textContent = error.message;
-        showStatus('chat-status', '❌ Failed to load AI: ' + error.message, 'error');
     }
 }
 
@@ -247,13 +338,18 @@ function setupEventListeners() {
     if (clearBtn) {
         clearBtn.addEventListener('click', clearNotes);
     }
+    
+    // Reset AI button
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetAI);
+    }
 }
 
 // Initialize everything
 function init() {
     console.log('🤖 Student OS AI Assistant initializing...');
     setupEventListeners();
-    initAI();
+    initAI(); // Start with 3 retries by default
 }
 
 // Start when DOM is ready
@@ -269,5 +365,6 @@ window.StudentOS_AI = {
     handleChat,
     analyzeNotes,
     clearNotes,
+    resetAI,
     isReady: () => isReady
 };
