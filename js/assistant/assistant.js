@@ -1,204 +1,273 @@
-(function() {
-  'use strict';
 
-  // 🔥 USE HTML'S API_BASE OR FALLBACK - PERFECT SYNC
-  const API_BASE = window.API_BASE || (
-    window.location.hostname === 'localhost'
-      ? 'http://localhost:3000'
-      : 'https://student-so.onrender.com'
-  );
+import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm@0.2.6";
 
-  console.log('🔗 StudentOS AI - Connected to:', API_BASE);
+// Global variables
+let engine = null;
+let isReady = false;
+let currentMode = 'general';
+let messageCount = 0;
 
-  // 🔥 GLOBAL FUNCTIONS - EXPOSED PROPERLY
-  window.addMessage = null;
-  window.scrollChatToBottom = null;
+// DOM Elements
+const chatMessages = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const chatForm = document.getElementById('chatForm');
+const sendBtn = document.getElementById('sendBtn');
+const notesInput = document.getElementById('notes-input');
+const notesBtn = document.getElementById('analyze-btn');
+const clearBtn = document.getElementById('clear-btn');
+const chatStatus = document.getElementById('chat-status');
+const notesStatus = document.getElementById('notes-status');
+const notesResults = document.getElementById('notes-results');
+const notesContent = document.getElementById('notes-content');
+const sessionStats = document.getElementById('session-stats');
+const connectionStatus = document.getElementById('connection-status');
+const currentModeDisplay = document.getElementById('current-mode-display');
+const modeDescription = document.getElementById('mode-description');
 
-  function init() {
-    const chatForm = document.getElementById('chatForm');
-    const chatInput = document.getElementById('chatInput');
-    const chatMessages = document.getElementById('chatMessages');
-    const sendButton = chatForm?.querySelector('button[type="submit"]');
+// Status display function
+function showStatus(elementId, message, type) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.textContent = message;
+    el.className = 'status ' + type;
+}
 
-    if (!chatForm || !chatInput || !chatMessages) {
-      console.error('❌ Missing chat elements');
-      return;
-    }
+// Add message to chat window
+function addMessage(type, text) {
+    if (!chatMessages) return;
+    
+    const div = document.createElement('div');
+    div.className = `message ${type}`;
+    div.innerHTML = `<div class="message-sender">${type === 'user' ? 'You' : 'AI'}</div>${text}`;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    messageCount++;
+    return div;
+}
 
-    let isSending = false;
-
-    // 🔥 EXPOSE GLOBALLY - THIS WAS THE MISSING PIECE
-    window.addMessage = appendMessage;
-    window.scrollChatToBottom = () => scrollToBottom(chatMessages);
-
-    // Auto-resize input
-    chatInput.addEventListener('input', function() {
-      this.style.height = 'auto';
-      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-      sendButton.disabled = !this.value.trim() || isSending;
-    });
-
-    // Event listeners
-    chatForm.addEventListener('submit', sendMessage);
-    chatInput.addEventListener('keydown', handleEnter);
-
-    // Initial setup
-    chatInput.dispatchEvent(new Event('input'));
-    testConnection();
-
-    async function testConnection() {
-      try {
-        const res = await fetch(`${API_BASE}/health`, { cache: 'no-store' });
-        if (res.ok) {
-          updateStatus('🟢 Live', 'GPT-4o-mini ready');
-          appendMessage('assistant', '🚀 AI Study Assistant online! Ask about math, science, coding, or paste notes.');
-        } else {
-          updateStatus('🟡 Warming up', 'Backend waking...');
-        }
-      } catch {
-        updateStatus('🟠 Offline mode', 'Send a message to wake backend');
-        appendMessage('assistant', '⚠️ Backend asleep (Render free tier). Chat to wake it!');
-      }
-    }
-
-    async function sendMessage(e) {
-      e.preventDefault();
-      
-      if (isSending) {
-        console.log("🚫 Duplicate blocked");
-        return;
-      }
-
-      const message = chatInput.value.trim();
-      if (!message) return;
-
-      // Add user message
-      appendMessage('user', message);
-      chatInput.value = '';
-      chatInput.style.height = 'auto';
-      
-      // Lock UI
-      sendButton.disabled = true;
-      chatInput.disabled = true;
-      isSending = true;
-
-      const thinkingId = appendThinking();
-
-      try {
-        console.log(`📤 Sending: "${message.slice(0, 50)}..."`);
-        
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 35000); // Render-safe
-
-        const response = await fetch(`${API_BASE}/api/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message }),
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        removeElement(thinkingId);
-
-        // 🔥 TRUST YOUR BACKEND - ONLY data.reply
-        if (data.reply) {
-          appendMessage('assistant', data.reply);
-          console.log('✅ Response delivered');
-        } else {
-          throw new Error(`No reply in response: ${JSON.stringify(data)}`);
-        }
-
-      } catch (error) {
-        console.error('🚨 Chat error:', error);
-        removeElement(thinkingId);
-        
-        let errorMsg;
-        if (error.name === 'AbortError') {
-          errorMsg = '⏰ Timeout (35s) - Backend waking up?';
-        } else if (error.message.includes('Failed to fetch')) {
-          errorMsg = '🌐 Network error - Check connection';
-        } else {
-          errorMsg = error.message;
-        }
-        
-        appendMessage('assistant', `❌ ${errorMsg}`);
-      } finally {
-        // Unlock UI
-        isSending = false;
-        sendButton.disabled = !chatInput.value.trim();
-        chatInput.disabled = false;
-        chatInput.focus();
-      }
-    }
-
-    function handleEnter(e) {
-      if (chatInput.disabled || isSending || e.shiftKey) return;
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        chatForm.requestSubmit();
-      }
-    }
-
-    function appendMessage(type, text) {
-      const div = createMessageEl(type, text);
-      chatMessages.appendChild(div);
-      scrollToBottom(chatMessages);
-    }
-
-    function appendThinking() {
-      const id = `thinking-${Date.now()}`;
-      const div = createMessageEl('assistant', '🤔 AI Thinking...');
-      div.id = id;
-      chatMessages.appendChild(div);
-      scrollToBottom(chatMessages);
-      return id;
-    }
-
-    function createMessageEl(type, text) {
-      const div = document.createElement('div');
-      div.className = `message ${type}`;
-      div.innerHTML = `
-        <div class="message-content">
-          <span class="message-sender">${type === 'user' ? 'You' : 'AI'}</span>
-          <div class="message-text">${escapeHtml(text)}</div>
+// Show typing indicator
+function showTyping() {
+    if (!chatMessages) return;
+    
+    const div = document.createElement('div');
+    div.className = 'message assistant';
+    div.id = 'typing-indicator';
+    div.innerHTML = `
+        <div class="message-sender">AI</div>
+        <div class="typing-indicator">
+            <span></span><span></span><span></span>
         </div>
-      `;
-      return div;
-    }
+    `;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
 
-    function removeElement(id) {
-      const el = document.getElementById(id);
-      el?.remove();
-    }
+// Hide typing indicator
+function hideTyping() {
+    const typing = document.getElementById('typing-indicator');
+    if (typing) typing.remove();
+}
 
-    function scrollToBottom(container) {
-      container.scrollTop = container.scrollHeight;
+// Switch between modes
+function switchMode(mode) {
+    currentMode = mode;
+    const chatSection = chatForm ? chatForm.closest('.glass-panel') : null;
+    const notesSection = document.getElementById('notes-section');
+    
+    const generalBtn = document.getElementById('general-mode-btn');
+    const notesBtnMode = document.getElementById('notes-mode-btn');
+    
+    if (generalBtn) generalBtn.classList.toggle('active', mode === 'general');
+    if (notesBtnMode) notesBtnMode.classList.toggle('active', mode === 'notes');
+    
+    if (mode === 'notes') {
+        if (notesSection) notesSection.style.display = 'block';
+        if (chatSection) chatSection.style.display = 'none';
+        if (currentModeDisplay) currentModeDisplay.textContent = '📝 Notes Helper';
+        if (modeDescription) modeDescription.textContent = 'Paste notes for AI analysis';
+    } else {
+        if (notesSection) notesSection.style.display = 'none';
+        if (chatSection) chatSection.style.display = 'block';
+        if (currentModeDisplay) currentModeDisplay.textContent = '💬 Live Chat';
+        if (modeDescription) modeDescription.textContent = 'AI runs locally in your browser';
     }
+}
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
+// Initialize AI Model
+async function initAI() {
+    showStatus('chat-status', '🔄 Downloading AI model (30-80MB)...', 'loading');
+
+    try {
+        engine = await CreateMLCEngine(
+            "Phi-3.5-mini-instruct-q4f16_1-MLC",
+            {
+                initProgressCallback: (progress) => {
+                    const percent = (progress * 100).toFixed(0);
+                    if (sessionStats) {
+                        sessionStats.textContent = `📥 ${percent}%`;
+                        sessionStats.style.color = '#a855f7';
+                    }
+                    if (connectionStatus) connectionStatus.textContent = 'Downloading model...';
+                    showStatus('chat-status', `🔄 Loading AI: ${percent}%`, 'loading');
+                }
+            }
+        );
+
+        isReady = true;
+        if (sessionStats) {
+            sessionStats.textContent = '🟢 Ready';
+            sessionStats.style.color = '#10b981';
+        }
+        if (connectionStatus) connectionStatus.textContent = 'AI running locally';
+        showStatus('chat-status', '🟢 AI Ready! Ask me anything.', 'success');
+        
+        if (sendBtn) sendBtn.disabled = false;
+        if (notesBtn) notesBtn.disabled = false;
+
+        addMessage('assistant', '🚀 AI Study Assistant ready! Ask me about math, science, history, coding, or any subject. You can also switch to Notes Helper mode to analyze your lecture notes!');
+
+    } catch (error) {
+        console.error('AI Init Error:', error);
+        if (sessionStats) {
+            sessionStats.textContent = '❌ Error';
+            sessionStats.style.color = '#ef4444';
+        }
+        if (connectionStatus) connectionStatus.textContent = error.message;
+        showStatus('chat-status', '❌ Failed to load AI: ' + error.message, 'error');
     }
+}
 
-    function updateStatus(iconText, subText) {
-      const statsEl = document.getElementById('session-stats');
-      const statusEl = document.getElementById('connection-status');
-      if (statsEl) statsEl.textContent = iconText;
-      if (statusEl) statusEl.textContent = subText;
+// Handle chat submission
+async function handleChat(e) {
+    e.preventDefault();
+    if (!chatInput || !engine || !isReady) return;
+    
+    const userMessage = chatInput.value.trim();
+    if (!userMessage) return;
+
+    chatInput.value = '';
+    addMessage('user', userMessage);
+    showTyping();
+
+    try {
+        const messages = [
+            { role: "system", content: "You are a helpful AI study assistant. Give clear, educational answers. Format with bullet points when appropriate." },
+            { role: "user", content: userMessage }
+        ];
+
+        const chunks = await engine.chat.completions.create(
+            messages,
+            { temperature: 0.7, max_tokens: 512 }
+        );
+
+        hideTyping();
+        const response = chunks.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+        addMessage('assistant', response);
+
+    } catch (error) {
+        hideTyping();
+        addMessage('assistant', '❌ Error: ' + error.message);
     }
-  }
+}
 
-  // Initialize when ready
-  if (document.readyState === 'loading') {
+// Handle notes analysis
+async function analyzeNotes() {
+    if (!notesInput || !engine || !isReady) return;
+    
+    const notes = notesInput.value.trim();
+    if (!notes) return;
+
+    showStatus('notes-status', '🔄 Analyzing your notes...', 'loading');
+    if (notesBtn) notesBtn.disabled = true;
+
+    try {
+        const prompt = `Analyze these study notes and provide:
+1. A brief summary (2-3 sentences)
+2. Key concepts to remember
+3. Any errors or misconceptions
+4. Suggestions for improvement
+
+Notes: ${notes}`;
+
+        const messages = [
+            { role: "system", content: "You are a helpful AI study assistant. Analyze the notes and provide structured feedback." },
+            { role: "user", content: prompt }
+        ];
+
+        const chunks = await engine.chat.completions.create(
+            messages,
+            { temperature: 0.7, max_tokens: 800 }
+        );
+
+        const response = chunks.choices[0]?.message?.content || 'No analysis generated.';
+        
+        if (notesContent) {
+            notesContent.innerHTML = response.replace(/\n/g, '<br>').replace(/•/g, '•');
+        }
+        if (notesResults) notesResults.classList.add('show');
+        showStatus('notes-status', '✅ Analysis complete!', 'success');
+
+    } catch (error) {
+        showStatus('notes-status', '❌ Error: ' + error.message, 'error');
+    } finally {
+        if (notesBtn) notesBtn.disabled = false;
+    }
+}
+
+// Clear notes
+function clearNotes() {
+    if (notesInput) notesInput.value = '';
+    if (notesResults) notesResults.classList.remove('show');
+    if (notesContent) notesContent.innerHTML = '';
+    showStatus('notes-status', '', '');
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Mode buttons
+    const generalBtn = document.getElementById('general-mode-btn');
+    const notesBtnMode = document.getElementById('notes-mode-btn');
+    
+    if (generalBtn) {
+        generalBtn.addEventListener('click', () => switchMode('general'));
+    }
+    if (notesBtnMode) {
+        notesBtnMode.addEventListener('click', () => switchMode('notes'));
+    }
+    
+    // Chat form
+    if (chatForm) {
+        chatForm.addEventListener('submit', handleChat);
+    }
+    
+    // Notes buttons
+    if (notesBtn) {
+        notesBtn.addEventListener('click', analyzeNotes);
+    }
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearNotes);
+    }
+}
+
+// Initialize everything
+function init() {
+    console.log('🤖 Student OS AI Assistant initializing...');
+    setupEventListeners();
+    initAI();
+}
+
+// Start when DOM is ready
+if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
-  } else {
+} else {
     init();
-  }
-})();
+}
+
+// Export functions for external use if needed
+window.StudentOS_AI = {
+    switchMode,
+    handleChat,
+    analyzeNotes,
+    clearNotes,
+    isReady: () => isReady
+};
