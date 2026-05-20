@@ -1,99 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student OS AI</title>
-
-    <!-- YOUR EXISTING CSS -->
-    <link rel="stylesheet" href="style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap');
+        :root {
+            --bg-color: #0f0c29;
+            --bg-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-muted: #b3b3b3;
+            --accent-pink: #ff758c;
+            --accent-blue: #7eb8ea;
+            --accent-purple: #a18cd1;
+            --card-radius: 20px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Nunito', sans-serif; background: var(--bg-gradient); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem 1rem; width: 100%; flex: 1; }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: var(--card-radius); padding: 2rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37); }
+        .btn { padding: 14px 28px; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 1.1rem; font-family: 'Nunito', sans-serif; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; min-height: 56px; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple)); color: white; box-shadow: 0 4px 14px rgba(255, 117, 140, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255, 117, 140, 0.4); }
+        nav { padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(20px); margin-bottom: 1rem; }
+        .logo { font-size: 1.5rem; font-weight: 800; background: linear-gradient(to right, var(--accent-pink), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-links { display: flex; gap: 2rem; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-weight: 600; transition: all 0.3s; position: relative; padding: 0.5rem 0; }
+        .nav-links a:hover, .nav-links a.active { color: var(--accent-blue); }
+        .nav-links a.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: var(--accent-blue); border-radius: 2px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; }
+        .stat-item { background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 16px; text-align: center; border: 1px solid var(--glass-border); }
+        @media (max-width: 768px) { .container { padding: 1.5rem 1rem; } nav { padding: 1rem; flex-direction: column; gap: 1rem; } }
+    </style>
 </head>
-
 <body>
-
-    <!-- NAVBAR -->
     <nav>
         <div class="logo">Student OS</div>
-
         <div class="nav-links">
             <a href="index.html">Home</a>
             <a href="assistant.html" class="active">AI Assistant</a>
         </div>
     </nav>
-
-    <!-- MAIN CONTAINER -->
     <div class="container">
-
         <div class="glass-panel">
-
-            <!-- TITLE -->
-            <h1 style="margin-bottom: 1rem;">
-                Student OS AI Tutor
-            </h1>
-
-            <!-- DESCRIPTION -->
-            <p style="color: var(--text-muted); margin-bottom: 2rem;">
-                Your personal Physics, Chemistry & Biology tutor powered by a hosted AI agent.
-            </p>
-
-            <!-- STATUS CARD -->
+            <h1 style="margin-bottom: 1rem;">Student OS AI Tutor</h1>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Your personal Physics, Chemistry & Biology tutor.</p>
             <div class="stats-grid">
-
-                <div class="stat-item">
-                    <h3>Mode</h3>
-                    <p>High School Tutor</p>
-                </div>
-
-                <div class="stat-item">
-                    <h3>Subjects</h3>
-                    <p>Physics • Chemistry • Biology</p>
-                </div>
-
-                <div class="stat-item">
-                    <h3>Backend</h3>
-                    <p>Voiceflow Hosted AI</p>
-                </div>
-
+                <div class="stat-item"><h3>Mode</h3><p>High School Tutor</p></div>
+                <div class="stat-item"><h3>Subjects</h3><p>Physics • Chemistry • Biology</p></div>
+                <div class="stat-item"><h3>Backend</h3><p>Voiceflow Hosted AI</p></div>
             </div>
-
-            <!-- CHAT WIDGET NOTICE -->
             <div class="glass-panel" style="margin-top: 2rem; text-align: center;">
-
-                <p style="color: var(--text-muted); margin-bottom: 1rem;">
-                    Click below to open your AI tutor
-                </p>
-
-                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 2rem;">
-                    (Runs in cloud. No backend. No laptop suffering.)
-                </p>
-
-                <!-- VOICEFLOW WIDGET BUTTON WILL APPEAR HERE -->
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">Click below to start chatting with your AI tutor</p>
                 <div id="voiceflow-chat"></div>
-
             </div>
-
         </div>
-
     </div>
-
-    <!-- VOICEFLOW SCRIPT -->
-<script type="text/javascript">
-  (function(d, t) {
-      var v = d.createElement(t), s = d.getElementsByTagName(t)[0];
-      v.onload = function() {
-        window.voiceflow.chat.load({
-          verify: { projectID: '6a0d2834c39f1b50d0674b29' },
-          url: 'https://general-runtime.voiceflow.com',
-          voice: {
-            url: "https://runtime-api.voiceflow.com"
-          }
-        });
-      }
-      v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs"; v.type = "text/javascript"; s.parentNode.insertBefore(v, s);
-  })(document, 'script');
-</script>
-
+    <script type="text/javascript">
+        (function(d, t) {
+            var v = d.createElement(t), s = d.getElementsByTagName(t)[0];
+            v.onload = function() {
+                window.voiceflow.chat.load({ verify: { projectID: '6a0d2834c39f1b50d0674b29' }, url: 'https://general-runtime.voiceflow.com', voice: { url: "https://runtime-api.voiceflow.com" } });
+            }
+            v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs"; v.type = "text/javascript"; s.parentNode.insertBefore(v, s);
+        })(document, 'script');
+    </script>
 </body>
-
 </html>
