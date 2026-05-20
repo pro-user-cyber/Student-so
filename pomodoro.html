@@ -36,7 +36,11 @@
     </div>
 
     <script>
-        let timeLeft = 25 * 60;
+        // Configuration
+        const DEFAULT_TIME = 25 * 60; // 25 minutes in seconds
+        const END_TIME_KEY = 'pomodoro_end_time'; // LocalStorage key for end timestamp
+        const PAUSED_TIME_KEY = 'pomodoro_paused_time'; // Key for paused duration
+        
         let timerId = null;
         const display = document.getElementById('timer');
         const countDisplay = document.getElementById('session-count');
@@ -45,28 +49,84 @@
         let sessions = localStorage.getItem('pomodoro_sessions') || 0;
         countDisplay.innerText = sessions;
 
-        function updateDisplay() {
-            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            const s = (timeLeft % 60).toString().padStart(2, '0');
-            display.innerText = `${m}:${s}`;
+        // Initialize on page load
+        window.onload = function() {
+            checkTimerState();
+        };
+
+        function checkTimerState() {
+            const endTime = localStorage.getItem(END_TIME_KEY);
+            const pausedTime = localStorage.getItem(PAUSED_TIME_KEY);
+
+            if (endTime) {
+                // If there is an end time, the timer was running
+                const now = Date.now();
+                const timeLeft = Math.ceil((parseInt(endTime) - now) / 1000);
+
+                if (timeLeft > 0) {
+                    // Timer is still valid (hasn't finished while away)
+                    updateDisplay(timeLeft);
+                    startTimer(false); // false = don't overwrite LS, just resume loop
+                } else {
+                    // Timer finished while user was away/closed
+                    handleComplete();
+                }
+            } else if (pausedTime) {
+                // Timer was paused previously
+                updateDisplay(parseInt(pausedTime));
+            } else {
+                // Fresh start
+                updateDisplay(DEFAULT_TIME);
+            }
         }
 
-        function startTimer() {
-            if (timerId) return;
+        function updateDisplay(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            display.innerText = `${m}:${s}`;
+            // Also update document title so user can see time in tab
+            document.title = `(${m}:${s}) Pomodoro - Student OS`;
+        }
+
+        function startTimer(isUserAction = true) {
+            if (timerId) return; // Already running
+
+            if (isUserAction) {
+                // Calculate the timestamp when the timer should finish
+                // We get current remaining time from display to be precise
+                const currentTimeText = display.innerText;
+                const [m, s] = currentTimeText.split(':').map(Number);
+                const totalSeconds = m * 60 + s;
+                
+                if (totalSeconds <= 0) return;
+
+                const endTime = Date.now() + (totalSeconds * 1000);
+                
+                // Save to LocalStorage
+                localStorage.setItem(END_TIME_KEY, endTime);
+                localStorage.removeItem(PAUSED_TIME_KEY);
+            }
+
+            // Start the interval
             timerId = setInterval(() => {
-                if (timeLeft > 0) {
-                    timeLeft--;
-                    updateDisplay();
-                } else {
+                const endTime = parseInt(localStorage.getItem(END_TIME_KEY));
+                
+                if (!endTime) {
+                    pauseTimer();
+                    return;
+                }
+
+                const now = Date.now();
+                const timeLeft = Math.ceil((endTime - now) / 1000);
+
+                if (timeLeft <= 0) {
+                    // Time is up
                     clearInterval(timerId);
                     timerId = null;
-                    alert("Session Complete! Take a break.");
-                    // Increment session
-                    sessions = parseInt(sessions) + 1;
-                    localStorage.setItem('pomodoro_sessions', sessions);
-                    countDisplay.innerText = sessions;
-                    timeLeft = 25 * 60;
-                    updateDisplay();
+                    updateDisplay(0);
+                    handleComplete();
+                } else {
+                    updateDisplay(timeLeft);
                 }
             }, 1000);
         }
@@ -74,12 +134,38 @@
         function pauseTimer() {
             clearInterval(timerId);
             timerId = null;
+
+            // Calculate remaining time to save for later
+            const endTime = localStorage.getItem(END_TIME_KEY);
+            if (endTime) {
+                const remaining = Math.ceil((parseInt(endTime) - Date.now()) / 1000);
+                if (remaining > 0) {
+                    localStorage.setItem(PAUSED_TIME_KEY, remaining);
+                }
+            }
+            
+            // Clear the running end time
+            localStorage.removeItem(END_TIME_KEY);
         }
 
         function resetTimer() {
             pauseTimer();
-            timeLeft = 25 * 60;
-            updateDisplay();
+            localStorage.removeItem(END_TIME_KEY);
+            localStorage.removeItem(PAUSED_TIME_KEY);
+            document.title = "Pomodoro - Student OS";
+            updateDisplay(DEFAULT_TIME);
+        }
+
+        function handleComplete() {
+            alert("Session Complete! Take a break.");
+            
+            // Increment session
+            sessions = parseInt(sessions) + 1;
+            localStorage.setItem('pomodoro_sessions', sessions);
+            countDisplay.innerText = sessions;
+            
+            // Reset logic
+            resetTimer();
         }
     </script>
 </body>
