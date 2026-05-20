@@ -66,70 +66,102 @@
 
 async function sendMessage() {
 
-    const input = document.getElementById("userInput")
-    const fileInput = document.getElementById("fileInput")
-    const chatWindow = document.getElementById("chatWindow")
+    const input =
+        document.getElementById("userInput")
 
-    const message = input.value.trim()
+    const fileInput =
+        document.getElementById("fileInput")
 
+    const chatWindow =
+        document.getElementById("chatWindow")
+
+    const message =
+        input.value.trim()
+
+    // STOP EMPTY SENDS
     if (!message && !fileInput.files[0]) {
         return
     }
 
-    // USER MESSAGE UI
-    const userMessage = document.createElement("div")
+    // USER MESSAGE
+    const userMessage =
+        document.createElement("div")
 
-    userMessage.className = "message user"
+    userMessage.className =
+        "message user"
 
-    userMessage.innerHTML = `
-        ${message || "Uploaded a file"}
-    `
+    userMessage.innerHTML =
+        message || "Uploaded a file"
 
     chatWindow.appendChild(userMessage)
 
-    // FORM DATA
+    // SCROLL DOWN
+    chatWindow.scrollTop =
+        chatWindow.scrollHeight
+
+    // CREATE FORM DATA
     const formData = new FormData()
 
-    formData.append("message", message)
+    formData.append(
+        "message",
+        message
+    )
 
+    // ADD FILE IF EXISTS
     if (fileInput.files[0]) {
-        formData.append("file", fileInput.files[0])
+
+        formData.append(
+            "file",
+            fileInput.files[0]
+        )
     }
 
     // CLEAR INPUT
     input.value = ""
 
     // LOADING MESSAGE
-    const loading = document.createElement("div")
+    const loading =
+        document.createElement("div")
 
-    loading.className = "message assistant"
+    loading.className =
+        "message assistant"
 
-    loading.innerHTML = "Thinking..."
+    loading.innerHTML =
+        "Thinking..."
 
     chatWindow.appendChild(loading)
 
-    chatWindow.scrollTop = chatWindow.scrollHeight
+    chatWindow.scrollTop =
+        chatWindow.scrollHeight
 
     try {
 
-        const response = await fetch(
-            "https://dubiously-latch-answering.ngrok-free.dev/chat"),
-            {
-                method: "POST",
-                body: formData
-            }
-        )
+        // SEND TO BACKEND
+        const response =
+            await fetch(
+                "https://dubiously-latch-answering.ngrok-free.dev/chat",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            )
 
-        const data = await response.json()
+        // GET JSON
+        const data =
+            await response.json()
 
+        // REMOVE LOADING
         loading.remove()
 
         // AI MESSAGE
-        const botMessage = document.createElement("div")
+        const botMessage =
+            document.createElement("div")
 
-        botMessage.className = "message assistant"
+        botMessage.className =
+            "message assistant"
 
-        botMessage.innerHTML = data.reply
+        botMessage.innerHTML =
+            data.reply
 
         chatWindow.appendChild(botMessage)
 
@@ -137,20 +169,25 @@ async function sendMessage() {
 
     catch (err) {
 
+        console.error(err)
+
         loading.remove()
 
-        const errorMessage = document.createElement("div")
+        const errorMessage =
+            document.createElement("div")
 
-        errorMessage.className = "message assistant"
+        errorMessage.className =
+            "message assistant"
 
         errorMessage.innerHTML =
             "Backend connection failed."
 
         chatWindow.appendChild(errorMessage)
-
     }
 
-    chatWindow.scrollTop = chatWindow.scrollHeight
+    // AUTO SCROLL
+    chatWindow.scrollTop =
+        chatWindow.scrollHeight
 }
 
 </script>
