@@ -537,42 +537,35 @@
             }
         };
                 // --- REAL FILE UPLOAD LOGIC ---
-        
-        const realFileInput = document.getElementById('realFileInput');
+const realFileInput = document.getElementById('realFileInput');
 
-        // Make the Upload button trigger the hidden file input
-        document.getElementById('uploadBtn').onclick = function() {
-            realFileInput.click();
-        };
+document.getElementById('uploadBtn').onclick = function() {
+    realFileInput.click();
+};
 
-        // Handle file selection
-        realFileInput.addEventListener('change', function(e) {
-            const files = e.target.files;
-            if (files.length > 0) {
-                // Loop through all selected files
-                Array.from(files).forEach(file => {
-                    const reader = new FileReader();
-                    
-                    // When file is read, convert to Base64 string
-                    reader.onload = function(event) {
-                        const fileContent = event.target.result; 
-                        
-                        // Save to virtual drive
-                        if (drive.createFile(file.name, fileContent)) {
-                            drive.render();
-                        }
-                    };
-                    
-                    // Read file as Data URL (Base64)
-                    reader.readAsDataURL(file);
-                });
-                
-                // Reset input so the same file can be selected again if needed
-                this.value = ''; 
+realFileInput.addEventListener('change', function(e) {
+    const files = e.target.files;
+    if (files.length > 0) {
+        Array.from(files).forEach(file => {
+            // Check file size (limit to ~2MB to be safe for localStorage)
+            if (file.size > 2 * 1024 * 1024) {
+                alert(`File "${file.name}" is too large! Max 2MB allowed.`);
+                return;
             }
-        });
 
-        // --- END OF UPLOAD LOGIC ---
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const fileContent = event.target.result; 
+                if (drive.createFile(file.name, fileContent)) {
+                    drive.render();
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+        this.value = ''; // Reset input
+    }
+});
+// --- END OF UPLOAD LOGIC ---
 
         // Initial Render
         drive.render();
