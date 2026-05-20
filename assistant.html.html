@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student OS AI</title>
+
+    <!-- YOUR EXISTING CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav>
+        <div class="logo">Student OS</div>
+
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="assistant.html" class="active">AI Assistant</a>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <div class="container">
+
+        <div class="glass-panel">
+
+            <!-- TITLE -->
+            <h1 style="margin-bottom: 1rem;">
+                Student OS AI Tutor
+            </h1>
+
+            <!-- DESCRIPTION -->
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                Your personal Physics, Chemistry & Biology tutor powered by a hosted AI agent.
+            </p>
+
+            <!-- STATUS CARD -->
+            <div class="stats-grid">
+
+                <div class="stat-item">
+                    <h3>Mode</h3>
+                    <p>High School Tutor</p>
+                </div>
+
+                <div class="stat-item">
+                    <h3>Subjects</h3>
+                    <p>Physics • Chemistry • Biology</p>
+                </div>
+
+                <div class="stat-item">
+                    <h3>Backend</h3>
+                    <p>Voiceflow Hosted AI</p>
+                </div>
+
+            </div>
+
+            <!-- CHAT WIDGET NOTICE -->
+            <div class="glass-panel" style="margin-top: 2rem; text-align: center;">
+
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                    Click below to open your AI tutor
+                </p>
+
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 2rem;">
+                    (Runs in cloud. No backend. No laptop suffering.)
+                </p>
+
+                <!-- VOICEFLOW WIDGET BUTTON WILL APPEAR HERE -->
+                <div id="voiceflow-chat"></div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- VOICEFLOW SCRIPT -->
+<script type="text/javascript">
+  (function(d, t) {
+      var v = d.createElement(t), s = d.getElementsByTagName(t)[0];
+      v.onload = function() {
+        window.voiceflow.chat.load({
+          verify: { projectID: '6a0d2834c39f1b50d0674b29' },
+          url: 'https://general-runtime.voiceflow.com',
+          voice: {
+            url: "https://runtime-api.voiceflow.com"
+          }
+        });
+      }
+      v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs"; v.type = "text/javascript"; s.parentNode.insertBefore(v, s);
+  })(document, 'script');
+</script>
+
+</body>
+
+</html>
